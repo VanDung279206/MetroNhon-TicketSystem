@@ -1,0 +1,1 @@
+// chỗ lưu lịch sử mua vé để không bị mất khi tắt app
