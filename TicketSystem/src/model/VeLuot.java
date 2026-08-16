@@ -50,6 +50,7 @@ public class VeLuot extends VeMetro {
         return getMaVe() + " | vé lượt | " +
                 gaDi.getTenGa() + " -> " +
                 gaDen.getTenGa() + " | " +
+                "ngày sử dụng: " + ngaySuDung + " | " +
                 getGiaVe() + "VND";
     }
 }
