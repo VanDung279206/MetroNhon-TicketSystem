@@ -5,11 +5,13 @@ import java.time.LocalDateTime;
 
 public class VeThang extends VeMetro {
     //kế thừa VeMetro
+    private LoaiVeThang loaiVe;
     private LocalDate ngayBatDau;
     private LocalDate ngayHetHan;
 
-    public VeThang(String maVe, HanhKhach hanhKhach, LocalDateTime ngayMua, double giaVe, boolean trangThai, LocalDate ngayBatDau, LocalDate ngayHetHan) {
+    public VeThang(String maVe, HanhKhach hanhKhach, LocalDateTime ngayMua, double giaVe, LoaiVeThang loaiVe, boolean trangThai, LocalDate ngayBatDau, LocalDate ngayHetHan) {
         super(maVe, hanhKhach, ngayMua, giaVe, trangThai);
+        this.loaiVe = loaiVe;
         this.ngayBatDau = ngayBatDau;
         this.ngayHetHan = ngayHetHan;
     }
