@@ -5,7 +5,9 @@ import java.time.LocalDateTime;
 
 public class VeThang extends VeMetro {
     //kế thừa VeMetro
-    private LoaiVeThang loaiVe;
+    private LoaiVeThang loaiVe; // loại vé tháng: phổ thông, ưu tiên,...
+
+    // thời gian hiệu lực
     private LocalDate ngayBatDau;
     private LocalDate ngayHetHan;
 
@@ -14,6 +16,14 @@ public class VeThang extends VeMetro {
         this.loaiVe = loaiVe;
         this.ngayBatDau = ngayBatDau;
         this.ngayHetHan = ngayHetHan;
+    }
+
+    public LoaiVeThang getLoaiVeThang() {
+        return loaiVe;
+    }
+
+    public void setLoaiVe(LoaiVeThang loaiVe) {
+        this.loaiVe = loaiVe;
     }
 
     public LocalDate getNgayBatDau() {
@@ -34,7 +44,7 @@ public class VeThang extends VeMetro {
 
     @Override
     public String getLoaiVe() {
-        return "VE_THHANG";
+        return "VE_THANG";
     }
 
     @Override
@@ -42,6 +52,8 @@ public class VeThang extends VeMetro {
         return getMaVe() + " | vé tháng | " +
                 "từ ngày: " + ngayBatDau + " đến ngày " +
                 ngayHetHan + " | " +
-                getGiaVe() + "VND";
+                getGiaVe() + "VND" +
+                " | trạng thái: " +
+                (isTrangThai() ? "Đang hoạt động" : "Đã hết hạn");
     }
 }
