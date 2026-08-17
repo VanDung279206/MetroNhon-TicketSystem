@@ -11,17 +11,14 @@ public class FileHandler {
     public static List<String> docFile(String duongDan) {
         List<String> danhSachDong = new ArrayList<>();
 
-        try {
-            File file = new File(duongDan);
+        File file = new File(duongDan);
 
-            if (!file.exists()) {
-                file.createNewFile();
-            }
+        try {
+            taoFileNeuChuaTonTai(file);
 
             BufferedReader reader = new BufferedReader(new FileReader(file));
 
             String dong;
-
             while ((dong = reader.readLine()) != null) {
                 danhSachDong.add(dong);
             }
@@ -37,8 +34,12 @@ public class FileHandler {
 
     // ghi đè toàn bộ nội dung file
     public static void ghiFile(String duongDan, List<String> danhSachDong) {
+        File file = new File(duongDan);
+
         try {
-            BufferedWriter writer = new BufferedWriter(new FileWriter(duongDan));
+            taoFileNeuChuaTonTai(file);
+
+            BufferedWriter writer = new BufferedWriter(new FileWriter(file));
 
             for (String dong : danhSachDong) {
                 writer.write(dong);
@@ -54,9 +55,13 @@ public class FileHandler {
 
     // ghi thêm một dòng vào cuối file
     public static void ghiThem(String duongDan, String noiDung) {
+        File file = new File(duongDan);
+
         try {
+            taoFileNeuChuaTonTai(file);
+
             BufferedWriter writer =
-                    new BufferedWriter(new FileWriter(duongDan, true));
+                    new BufferedWriter(new FileWriter(file, true));
 
             writer.write(noiDung);
             writer.newLine();
@@ -65,6 +70,18 @@ public class FileHandler {
 
         } catch (IOException e) {
             System.out.println("Lỗi ghi thêm file: " + e.getMessage());
+        }
+    }
+
+    private static void taoFileNeuChuaTonTai(File file) throws IOException {
+        File thuMucCha = file.getParentFile();
+
+        if (thuMucCha != null && !thuMucCha.exists()) {
+            thuMucCha.mkdirs();
+        }
+
+        if (!file.exists()) {
+            file.createNewFile();
         }
     }
 }
