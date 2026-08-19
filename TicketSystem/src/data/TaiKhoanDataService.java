@@ -27,7 +27,7 @@ public class TaiKhoanDataService {
 
                 danhSachTaiKhoan.add(taiKhoan);
             } catch (IllegalArgumentException e) {
-                System.out.println("Bỏ qua dòng tài khoản hợp lệ: " + x);
+                System.out.println("Bỏ qua dòng tài khoản không hợp lệ: " + x);
             }
         }
 
