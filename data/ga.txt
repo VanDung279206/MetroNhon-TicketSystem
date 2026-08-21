@@ -1,0 +1,8 @@
+G01|Nhổn|Bắc Từ Liêm|1
+G02|Minh Khai|Bắc Từ Liêm|2
+G03|Phú Diễn|Bắc Từ Liêm|3
+G04|Cầu Diễn|Nam Từ Liêm|4
+G05|Lê Đức Thọ|Nam Từ Liêm|5
+G06|Đại học Quốc gia Hà Nội|Cầu Giấy|6
+G07|Chùa Hà|Cầu Giấy|7
+G08|Cầu Giấy|Cầu Giấy|8
