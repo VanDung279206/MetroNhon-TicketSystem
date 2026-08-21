@@ -48,7 +48,16 @@ public class TaiKhoanDataService {
         String tenDangNhap = duLieu[0].trim();
         String matKhau = duLieu[1];
         VaiTro vaiTro = VaiTro.valueOf(duLieu[2].trim());
-        boolean trangThai = Boolean.parseBoolean(duLieu[3].trim());
+        String chuoiTrangThai = duLieu[3].trim();
+
+        if (!chuoiTrangThai.equalsIgnoreCase("true")
+                && !chuoiTrangThai.equalsIgnoreCase("false")) {
+            throw new IllegalArgumentException(
+                    "Trạng thái tài khoản phải là true hoặc false"
+            );
+        }
+
+        boolean trangThai = Boolean.parseBoolean(chuoiTrangThai);
 
         TaiKhoan taiKhoan = new TaiKhoan(tenDangNhap, matKhau, vaiTro, trangThai);
 
