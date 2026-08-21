@@ -242,6 +242,15 @@ public class HanhKhachDataService {
 
         for (HanhKhach x : danhSachHanhKhach) {
             kiemTraHanhKhach(x);
+
+            if (!taiKhoanDataService.tonTaiTenDangNhap(
+                    x.getTaiKhoan().getTenDangNhap()
+            )) {
+                throw new IllegalArgumentException(
+                        "Tài khoản của hành khách chưa được lưu"
+                );
+            }
+
             danhSachDong.add(chuyenHanhKhachThanhDong(x));
         }
 
