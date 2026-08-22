@@ -1,41 +1,48 @@
 package controller;
 
+import data.HanhKhachDataService;
+import data.TaiKhoanDataService;
 import model.HanhKhach;
 import model.TaiKhoan;
 import model.VaiTro;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
 /* Chức năng:
-* Đăng ký
-* Đăng nhập
-* Đổi mật khẩu
-* Lưu tài khoản đang đăng nhập
+ * Đăng ký
+ * Đăng nhập
+ * Đổi mật khẩu
+ * Lưu tài khoản đang đăng nhập
  */
 
-public class AuthController{
-    private final List<TaiKhoan> danhSachTaiKhoan;
-    private final List<HanhKhach> danhSachHanhKhach;
+public class AuthController {
+    private final TaiKhoanDataService taiKhoanDataService;
+    private final HanhKhachDataService hanhKhachDataService;
 
     // Thông tin người dùng đang đăng nhập
     private TaiKhoan taiKhoanDangNhap;
     private HanhKhach hanhKhachDangNhap;
 
-    // Dùng để sinh mã hành khách tự động
-    private int soThuTuHanhKhach;
-
-    public AuthController(){
-        danhSachTaiKhoan = new ArrayList<>();
-        danhSachHanhKhach = new ArrayList<>();
-        soThuTuHanhKhach = 1;
+    public AuthController() {
+        taiKhoanDataService = new TaiKhoanDataService();
+        hanhKhachDataService = new HanhKhachDataService();
     }
 
     // Đăng ký một tài khoản hành khách mới
-    public boolean dangKy(String tenDangNhap, String matKhau, String hoTen, String soDienThoai, String email){
-        //Kiểm tra các thông tin bắt buộc
-        if (isRong(tenDangNhap) || isRong(matKhau) || isRong(hoTen) || isRong(soDienThoai) || isRong(email)){
+    public boolean dangKy(
+            String tenDangNhap,
+            String matKhau,
+            String hoTen,
+            String soDienThoai,
+            String email
+    ) {
+        // Kiểm tra các thông tin bắt buộc
+        if (isRong(tenDangNhap)
+                || isRong(matKhau)
+                || isRong(hoTen)
+                || isRong(soDienThoai)
+                || isRong(email)) {
             return false;
         }
 
@@ -45,98 +52,139 @@ public class AuthController{
         soDienThoai = soDienThoai.trim();
         email = email.trim();
 
-        // Không cho phép trùng tên đăng nhập
-        if (timTaiKhoan(tenDangNhap) != null){
+        // Không cho phép trùng tài khoản, số điện thoại hoặc email
+        if (taiKhoanDataService.tonTaiTenDangNhap(tenDangNhap)
+                || hanhKhachDataService.tonTaiSoDienThoai(soDienThoai)
+                || hanhKhachDataService.tonTaiEmail(email)) {
             return false;
         }
 
-        TaiKhoan taiKhoan = new TaiKhoan(tenDangNhap, matKhau, VaiTro.HANH_KHACH, true);
-        HanhKhach hanhKhach = new HanhKhach(sinhMaHanhKhach(), hoTen, soDienThoai, email, taiKhoan);
+        TaiKhoan taiKhoan = new TaiKhoan(
+                tenDangNhap,
+                matKhau,
+                VaiTro.HANH_KHACH,
+                true
+        );
 
-        // Thêm thông tin mới vào danh sách
-        danhSachTaiKhoan.add(taiKhoan);
-        danhSachHanhKhach.add(hanhKhach);
+        HanhKhach hanhKhach = new HanhKhach(
+                hanhKhachDataService.sinhMaHanhKhachMoi(),
+                hoTen,
+                soDienThoai,
+                email,
+                taiKhoan
+        );
 
-        return true;
+        // Phải lưu tài khoản trước vì hành khách tham chiếu tên đăng nhập
+        if (!taiKhoanDataService.themTaiKhoan(taiKhoan)) {
+            return false;
+        }
+
+        if (hanhKhachDataService.themHanhKhach(hanhKhach)) {
+            return true;
+        }
+
+        // Nếu không lưu được hành khách thì xóa tài khoản vừa thêm,
+        // tránh tạo tài khoản không có hồ sơ hành khách đi kèm.
+        xoaTaiKhoanVuaThem(tenDangNhap);
+
+        return false;
     }
 
-    public TaiKhoan dangNhap(String tenDangNhap, String matKhau){
-        if (isRong(tenDangNhap) || isRong(matKhau)){
-            return  null;
-        }
-
-        TaiKhoan taiKhoan = timTaiKhoan(tenDangNhap.trim());
-
-        if (taiKhoan == null){
+    public TaiKhoan dangNhap(String tenDangNhap, String matKhau) {
+        if (isRong(tenDangNhap) || isRong(matKhau)) {
             return null;
         }
 
-        if (!taiKhoan.isTrangThai()){
+        TaiKhoan taiKhoan = taiKhoanDataService.timTheoTenDangNhap(
+                tenDangNhap.trim()
+        );
+
+        if (taiKhoan == null) {
             return null;
         }
 
-        if(!taiKhoan.getMatKhau().equals(matKhau)){
+        if (!taiKhoan.isTrangThai()) {
+            return null;
+        }
+
+        if (!taiKhoan.getMatKhau().equals(matKhau)) {
             return null;
         }
 
         // Lưu thông tin phiên đăng nhập hiện tại
         taiKhoanDangNhap = taiKhoan;
 
-        hanhKhachDangNhap = timHanhKhachTheoTaiKhoan(taiKhoan);
+        hanhKhachDangNhap = hanhKhachDataService.timTheoTenDangNhap(
+                taiKhoan.getTenDangNhap()
+        );
 
         return taiKhoanDangNhap;
     }
 
-    public void dangXuat(){
+    public void dangXuat() {
         taiKhoanDangNhap = null;
         hanhKhachDangNhap = null;
     }
 
-
-    public boolean doiMatKhau(String matKhauCu, String matKhauMoi){
+    public boolean doiMatKhau(String matKhauCu, String matKhauMoi) {
         // Phải đăng nhập trước
-        if (taiKhoanDangNhap == null){
+        if (taiKhoanDangNhap == null) {
             return false;
         }
 
         // Hai mật khẩu không được để trống
-        if (isRong(matKhauCu) || isRong(matKhauMoi)){
+        if (isRong(matKhauCu) || isRong(matKhauMoi)) {
             return false;
         }
 
         // Kiểm tra mật khẩu cũ
-        if (!taiKhoanDangNhap.getMatKhau().equals(matKhauCu)){
+        if (!taiKhoanDangNhap.getMatKhau().equals(matKhauCu)) {
             return false;
         }
 
         // Mật khẩu mới phải khác mật khẩu cũ
-        if (matKhauCu.equals(matKhauMoi)){
+        if (matKhauCu.equals(matKhauMoi)) {
             return false;
         }
 
-        taiKhoanDangNhap.setMatKhau(matKhauMoi);
+        List<TaiKhoan> danhSachTaiKhoan =
+                taiKhoanDataService.docDanhSachTaiKhoan();
 
-        return true;
+        for (TaiKhoan x : danhSachTaiKhoan) {
+            if (x.getTenDangNhap().equalsIgnoreCase(
+                    taiKhoanDangNhap.getTenDangNhap()
+            )) {
+                x.setMatKhau(matKhauMoi);
+                taiKhoanDataService.luuDanhSachTaiKhoan(danhSachTaiKhoan);
+
+                taiKhoanDangNhap = x;
+
+                if (hanhKhachDangNhap != null) {
+                    hanhKhachDangNhap.setTaiKhoan(x);
+                }
+
+                return true;
+            }
+        }
+
+        return false;
     }
 
-    public TaiKhoan timTaiKhoan(String tenDangNhap){
-        if (isRong(tenDangNhap)){
+    public TaiKhoan timTaiKhoan(String tenDangNhap) {
+        if (isRong(tenDangNhap)) {
             return null;
         }
 
-        for (TaiKhoan taiKhoan : danhSachTaiKhoan){
-            if (taiKhoan.getTenDangNhap().equalsIgnoreCase(tenDangNhap.trim())){
-                return taiKhoan;
-            }
-        }
-        return null;
+        return taiKhoanDataService.timTheoTenDangNhap(
+                tenDangNhap.trim()
+        );
     }
 
-    public TaiKhoan getTaiKhoanDangNhap(){
+    public TaiKhoan getTaiKhoanDangNhap() {
         return taiKhoanDangNhap;
     }
 
-    public HanhKhach getHanhKhachDangNhap(){
+    public HanhKhach getHanhKhachDangNhap() {
         return hanhKhachDangNhap;
     }
 
@@ -146,33 +194,63 @@ public class AuthController{
 
     public List<TaiKhoan> getDanhSachTaiKhoan() {
         return Collections.unmodifiableList(
-                danhSachTaiKhoan
+                taiKhoanDataService.docDanhSachTaiKhoan()
         );
     }
 
     public List<HanhKhach> getDanhSachHanhKhach() {
         return Collections.unmodifiableList(
-                danhSachHanhKhach
+                hanhKhachDataService.docDanhSachHanhKhach()
         );
     }
 
-    private HanhKhach timHanhKhachTheoTaiKhoan(
-            TaiKhoan taiKhoan
+    // Ghi trạng thái khóa/mở tài khoản xuống file
+    public boolean capNhatTrangThaiTaiKhoan(
+            String tenDangNhap,
+            boolean trangThaiMoi
     ) {
-        for (HanhKhach hanhKhach : danhSachHanhKhach) {
-            if (hanhKhach.getTaiKhoan() == taiKhoan) {
-                return hanhKhach;
+        if (isRong(tenDangNhap)) {
+            return false;
+        }
+
+        List<TaiKhoan> danhSachTaiKhoan =
+                taiKhoanDataService.docDanhSachTaiKhoan();
+
+        for (TaiKhoan x : danhSachTaiKhoan) {
+            if (x.getTenDangNhap().equalsIgnoreCase(tenDangNhap.trim())) {
+                x.setTrangThai(trangThaiMoi);
+                taiKhoanDataService.luuDanhSachTaiKhoan(danhSachTaiKhoan);
+
+                if (taiKhoanDangNhap != null
+                        && taiKhoanDangNhap.getTenDangNhap().equalsIgnoreCase(
+                        x.getTenDangNhap()
+                )) {
+                    taiKhoanDangNhap = x;
+
+                    if (!trangThaiMoi) {
+                        dangXuat();
+                    }
+                }
+
+                return true;
             }
         }
 
-        return null;
+        return false;
     }
 
-    private String sinhMaHanhKhach(){
-        return String.format("HK%03d", soThuTuHanhKhach++);
+    private void xoaTaiKhoanVuaThem(String tenDangNhap) {
+        List<TaiKhoan> danhSachTaiKhoan =
+                taiKhoanDataService.docDanhSachTaiKhoan();
+
+        danhSachTaiKhoan.removeIf(
+                x -> x.getTenDangNhap().equalsIgnoreCase(tenDangNhap)
+        );
+
+        taiKhoanDataService.luuDanhSachTaiKhoan(danhSachTaiKhoan);
     }
 
-    private  boolean isRong(String giaTri){
+    private boolean isRong(String giaTri) {
         return giaTri == null || giaTri.trim().isEmpty();
     }
 }
