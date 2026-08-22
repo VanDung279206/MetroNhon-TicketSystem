@@ -7,10 +7,10 @@ import model.VeMetro;
 import java.util.List;
 
 /* Chức năng:
-* Xem danh sách tài khoản
-* khóa/mở tài khoản
-* xem danh sách vé đã bán
-* tính tổng doanh thu
+ * Xem danh sách tài khoản
+ * khóa/mở tài khoản
+ * xem danh sách vé đã bán
+ * tính tổng doanh thu
  */
 
 public class AdminController {
@@ -50,9 +50,10 @@ public class AdminController {
             return false;
         }
 
-        taiKhoan.setTrangThai(false);
-
-        return true;
+        return authController.capNhatTrangThaiTaiKhoan(
+                tenDangNhap,
+                false
+        );
     }
 
     // Mở khóa tài khoản
@@ -69,9 +70,10 @@ public class AdminController {
             return false;
         }
 
-        taiKhoan.setTrangThai(true);
-
-        return true;
+        return authController.capNhatTrangThaiTaiKhoan(
+                tenDangNhap,
+                true
+        );
     }
 
     // Lấy danh sách vé đã bán.
