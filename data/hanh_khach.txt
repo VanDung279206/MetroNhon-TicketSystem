@@ -1,0 +1,1 @@
+HK001|Người dùng giao diện|0912345678|ui@test.local|ui_test
