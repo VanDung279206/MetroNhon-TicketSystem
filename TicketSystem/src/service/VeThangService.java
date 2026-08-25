@@ -125,8 +125,8 @@ public class VeThangService implements GiaVeThang {
          * Trạng thái được giữ độc lập với thời hạn.
          */
         return veThang.isTrangThai()
-                && !ngayHienTai.isBefore(
-                        LocalDate.now());
+                && !ngayHienTai.isAfter(
+                        veThang.getNgayKetThuc());
     }
 
     /**
