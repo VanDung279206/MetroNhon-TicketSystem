@@ -24,6 +24,8 @@ import java.util.List;
 public class AdminView extends JPanel {
     private final AdminController adminController;
     private final JPanel content = new JPanel(new BorderLayout());
+    private final JPanel workspace = new JPanel(new BorderLayout());
+    private NavigationDrawer drawer;
     private JTable accountTable;
 
     public AdminView(AdminController adminController,
@@ -32,45 +34,67 @@ public class AdminView extends JPanel {
         this.adminController = adminController;
         setLayout(new BorderLayout());
         setBackground(Theme.BACKGROUND);
-        add(taoSidebar(taiKhoan, onLogout), BorderLayout.WEST);
+
+        drawer = taoSidebar(taiKhoan, onLogout);
+        workspace.setOpaque(false);
+        workspace.add(drawer, BorderLayout.WEST);
         content.setBackground(Theme.BACKGROUND);
-        content.setBorder(BorderFactory.createEmptyBorder(28, 32, 28, 32));
-        add(content, BorderLayout.CENTER);
+        content.setBorder(BorderFactory.createEmptyBorder(22, 24, 24, 24));
+        workspace.add(content, BorderLayout.CENTER);
+
+        add(taoTopBar(taiKhoan, onLogout), BorderLayout.NORTH);
+        add(workspace, BorderLayout.CENTER);
         refresh();
     }
 
-    private JPanel taoSidebar(TaiKhoan taiKhoan, Runnable onLogout) {
-        JPanel sidebar = new JPanel();
-        sidebar.setBackground(Theme.PRIMARY_DARK);
-        sidebar.setPreferredSize(new Dimension(245, 700));
-        sidebar.setLayout(new BoxLayout(sidebar, BoxLayout.Y_AXIS));
-        sidebar.setBorder(BorderFactory.createEmptyBorder(28, 20, 24, 20));
+    private NavigationDrawer taoSidebar(TaiKhoan taiKhoan, Runnable onLogout) {
+        NavigationDrawer navigationDrawer = new NavigationDrawer(
+                "Quản trị hệ thống", taiKhoan.getTenDangNhap(),
+                this::toggleDrawer, onLogout
+        );
+        navigationDrawer.addItem("▦  Bảng điều khiển", this::refresh);
+        return navigationDrawer;
+    }
 
-        JLabel logo = new JLabel("M  METRO ADMIN");
-        logo.setForeground(Color.WHITE);
-        logo.setFont(logo.getFont().deriveFont(java.awt.Font.BOLD, 19f));
-        logo.setAlignmentX(LEFT_ALIGNMENT);
-        JLabel user = new JLabel(taiKhoan.getTenDangNhap());
-        user.setForeground(new Color(191, 219, 254));
-        user.setAlignmentX(LEFT_ALIGNMENT);
+    private JPanel taoTopBar(TaiKhoan taiKhoan, Runnable onLogout) {
+        JPanel wrapper = new JPanel(new BorderLayout());
+        wrapper.setOpaque(false);
+        wrapper.setBorder(BorderFactory.createEmptyBorder(16, 24, 0, 24));
 
-        JButton dashboardButton = Theme.navButton("▦  Bảng điều khiển");
-        dashboardButton.setAlignmentX(LEFT_ALIGNMENT);
-        dashboardButton.setMaximumSize(new Dimension(Integer.MAX_VALUE, 46));
-        dashboardButton.addActionListener(event -> refresh());
-        JButton logoutButton = Theme.navButton("↪  Đăng xuất");
-        logoutButton.setAlignmentX(LEFT_ALIGNMENT);
-        logoutButton.setMaximumSize(new Dimension(Integer.MAX_VALUE, 46));
-        logoutButton.addActionListener(event -> onLogout.run());
+        JPanel bar = new Theme.RoundedPanel(24, Theme.SURFACE);
+        bar.setLayout(new BorderLayout(18, 0));
+        bar.setBorder(BorderFactory.createEmptyBorder(10, 12, 10, 12));
 
-        sidebar.add(logo);
-        sidebar.add(Box.createVerticalStrut(10));
-        sidebar.add(user);
-        sidebar.add(Box.createVerticalStrut(38));
-        sidebar.add(dashboardButton);
-        sidebar.add(Box.createVerticalGlue());
-        sidebar.add(logoutButton);
-        return sidebar;
+        JPanel left = new JPanel(new FlowLayout(FlowLayout.LEFT, 12, 0));
+        left.setOpaque(false);
+        JButton menuButton = Theme.ghostButton("☰  Danh mục");
+        menuButton.addActionListener(event -> toggleDrawer());
+        JLabel section = Theme.muted("Bảng điều khiển quản trị");
+        section.setFont(section.getFont().deriveFont(java.awt.Font.BOLD));
+        left.add(menuButton);
+        left.add(section);
+
+        JButton accountButton = Theme.accountButton(taiKhoan.getTenDangNhap());
+        accountButton.addActionListener(event -> Theme.showAccountMenu(
+                accountButton,
+                taiKhoan.getTenDangNhap(),
+                taiKhoan.getTenDangNhap(),
+                "Quản trị viên hệ thống",
+                () -> showAccountDetails(taiKhoan),
+                null,
+                onLogout
+        ));
+
+        bar.add(left, BorderLayout.WEST);
+        bar.add(accountButton, BorderLayout.EAST);
+        wrapper.add(bar, BorderLayout.CENTER);
+        return wrapper;
+    }
+
+    private void toggleDrawer() {
+        drawer.setVisible(!drawer.isVisible());
+        workspace.revalidate();
+        workspace.repaint();
     }
 
     private void refresh() {
@@ -208,5 +232,27 @@ public class AdminView extends JPanel {
         }
         Theme.success(this, "Đã cập nhật tài khoản " + username + ".");
         refresh();
+    }
+
+    private void showAccountDetails(TaiKhoan taiKhoan) {
+        JPanel details = new JPanel(new GridLayout(0, 2, 18, 12));
+        details.setBorder(BorderFactory.createEmptyBorder(12, 14, 12, 14));
+        addAccountRow(details, "Tên đăng nhập", taiKhoan.getTenDangNhap());
+        addAccountRow(details, "Vai trò", "Quản trị viên");
+        addAccountRow(details, "Trạng thái",
+                taiKhoan.isTrangThai() ? "Đang hoạt động" : "Đã khóa");
+        javax.swing.JOptionPane.showMessageDialog(
+                this, details, "Thông tin tài khoản",
+                javax.swing.JOptionPane.PLAIN_MESSAGE
+        );
+    }
+
+    private void addAccountRow(JPanel panel, String labelText, String valueText) {
+        JLabel label = Theme.muted(labelText);
+        JLabel value = new JLabel(valueText);
+        value.setForeground(Theme.TEXT);
+        value.setFont(value.getFont().deriveFont(java.awt.Font.BOLD));
+        panel.add(label);
+        panel.add(value);
     }
 }
