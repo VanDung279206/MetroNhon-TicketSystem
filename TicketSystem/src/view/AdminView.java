@@ -156,11 +156,12 @@ public class AdminView extends JPanel {
     private JPanel taoTaiKhoanPanel(List<TaiKhoan> accounts) {
         JPanel panel = new JPanel(new BorderLayout(0, 14));
         panel.setOpaque(false);
-        String[] columns = {"Tên đăng nhập", "Vai trò", "Trạng thái"};
+        String[] columns = {"Tên đăng nhập", "Vai trò", "Số dư", "Trạng thái"};
         DefaultTableModel model = nonEditableModel(columns);
         for (TaiKhoan account : accounts) {
             model.addRow(new Object[]{
                     account.getTenDangNhap(), account.getVaiTro(),
+                    Theme.money(account.getSoDu()),
                     account.isTrangThai() ? "Đang hoạt động" : "Đã khóa"
             });
         }
