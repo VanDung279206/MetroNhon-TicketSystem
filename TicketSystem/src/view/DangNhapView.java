@@ -184,9 +184,14 @@ public class DangNhapView extends JPanel {
     private void dangNhap() {
         String tenDangNhap = tenDangNhapField.getText();
         String matKhau = new String(matKhauField.getPassword());
-        if (authController.dangNhap(tenDangNhap, matKhau) == null) {
-            Theme.error(this,
-                    "Tên đăng nhập, mật khẩu không đúng hoặc tài khoản đã bị khóa.");
+        try {
+            if (authController.dangNhap(tenDangNhap, matKhau) == null) {
+                Theme.error(this,
+                        "Tên đăng nhập, mật khẩu không đúng hoặc tài khoản đã bị khóa.");
+                return;
+            }
+        } catch (RuntimeException e) {
+            Theme.error(this, "Không thể truy cập dữ liệu đăng nhập. Vui lòng thử lại.");
             return;
         }
         matKhauField.setText("");
