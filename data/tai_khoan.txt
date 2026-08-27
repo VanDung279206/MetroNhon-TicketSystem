@@ -1,0 +1,2 @@
+ui_test|123456|HANH_KHACH|true
+admin|admin123|ADMIN|true
