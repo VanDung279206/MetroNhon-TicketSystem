@@ -3,7 +3,9 @@ package test;
 import controller.AdminController;
 import controller.AuthController;
 import controller.MuaVeController;
+import data.TaiKhoanDataService;
 import model.TaiKhoan;
+import model.VaiTro;
 
 public class AuthIntegrationTest {
 
@@ -99,8 +101,36 @@ public class AuthIntegrationTest {
                 "Mật khẩu mới phải đăng nhập được"
         );
 
-        AdminController adminController = new AdminController(
+        AdminController khongPhaiAdmin = new AdminController(
                 authSauKhiDoiMatKhau,
+                new MuaVeController()
+        );
+
+        kiemTra(
+                !khongPhaiAdmin.khoaTaiKhoan("integration_user"),
+                "Hành khách không được phép khóa tài khoản"
+        );
+
+        TaiKhoan admin = new TaiKhoan(
+                "admin_test",
+                "admin123",
+                VaiTro.ADMIN,
+                true
+        );
+
+        kiemTra(
+                new TaiKhoanDataService().themTaiKhoan(admin),
+                "Phải tạo được tài khoản admin kiểm thử"
+        );
+
+        AuthController authAdmin = new AuthController();
+        kiemTra(
+                authAdmin.dangNhap("admin_test", "admin123") != null,
+                "Admin phải đăng nhập được"
+        );
+
+        AdminController adminController = new AdminController(
+                authAdmin,
                 new MuaVeController()
         );
 
@@ -117,6 +147,11 @@ public class AuthIntegrationTest {
                         "654321"
                 ) == null,
                 "Tài khoản bị khóa không được đăng nhập sau khi khởi động lại"
+        );
+
+        kiemTra(
+                authSauKhiKhoa.dangNhap("admin_test", "admin123") != null,
+                "Admin phải đăng nhập được để mở khóa tài khoản"
         );
 
         AdminController adminMoKhoa = new AdminController(
