@@ -1,6 +1,7 @@
 package view;
 
 import controller.MuaVeController;
+import exception.KhongDuTienException;
 import model.Ga;
 import model.HanhKhach;
 import model.LoaiVeThang;
@@ -44,11 +45,18 @@ public class MuaVeView extends JPanel {
         heading.setLayout(new BoxLayout(heading, BoxLayout.Y_AXIS));
         JLabel title = Theme.title("Mua vé metro", 27);
         title.setAlignmentX(LEFT_ALIGNMENT);
-        JLabel subtitle = Theme.muted("Chọn loại vé phù hợp với hành trình của bạn.");
+        JLabel subtitle = Theme.muted("Chọn vé và thanh toán trực tiếp bằng số dư Ví Metro.");
         subtitle.setAlignmentX(LEFT_ALIGNMENT);
+        JLabel balance = new JLabel("Số dư hiện tại: "
+                + Theme.money(hanhKhach.getTaiKhoan().getSoDu()));
+        balance.setForeground(Theme.PRIMARY);
+        balance.setFont(balance.getFont().deriveFont(java.awt.Font.BOLD));
+        balance.setAlignmentX(LEFT_ALIGNMENT);
         heading.add(title);
         heading.add(Box.createVerticalStrut(6));
         heading.add(subtitle);
+        heading.add(Box.createVerticalStrut(8));
+        heading.add(balance);
         add(heading, BorderLayout.NORTH);
 
         List<Ga> danhSachGa = muaVeController.getDanhSachGa();
@@ -188,8 +196,12 @@ public class MuaVeView extends JPanel {
             );
             Theme.success(this, "Đã mua vé " + ve.getMaVe() + "\n"
                     + gaDi.getTenGa() + " → " + gaDen.getTenGa() + "\n"
-                    + Theme.money(ve.getGiaVe()));
+                    + "Đã thanh toán: " + Theme.money(ve.getGiaVe()) + "\n"
+                    + "Số dư còn lại: "
+                    + Theme.money(hanhKhach.getTaiKhoan().getSoDu()));
             onTicketPurchased.run();
+        } catch (KhongDuTienException e) {
+            Theme.error(this, e.getMessage() + "\nVui lòng nạp thêm tiền vào Ví Metro.");
         } catch (RuntimeException e) {
             Theme.error(this, e.getMessage());
         }
@@ -200,8 +212,12 @@ public class MuaVeView extends JPanel {
             VeThang ve = muaVeController.muaVeThang(hanhKhach, loaiVe);
             Theme.success(this, "Đã mua vé tháng " + ve.getMaVe() + "\n"
                     + "Hết hạn: " + ve.getNgayHetHan() + "\n"
-                    + Theme.money(ve.getGiaVe()));
+                    + "Đã thanh toán: " + Theme.money(ve.getGiaVe()) + "\n"
+                    + "Số dư còn lại: "
+                    + Theme.money(hanhKhach.getTaiKhoan().getSoDu()));
             onTicketPurchased.run();
+        } catch (KhongDuTienException e) {
+            Theme.error(this, e.getMessage() + "\nVui lòng nạp thêm tiền vào Ví Metro.");
         } catch (RuntimeException e) {
             Theme.error(this, e.getMessage());
         }

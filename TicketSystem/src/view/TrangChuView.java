@@ -22,6 +22,8 @@ public class TrangChuView extends JFrame {
     private final AdminController adminController;
     private final CardLayout cardLayout;
     private final JPanel root;
+    private AdminView adminView;
+    private HanhKhachView hanhKhachView;
 
     public TrangChuView() {
         super("Metro Nhổn – Hệ thống vé điện tử");
@@ -50,18 +52,36 @@ public class TrangChuView extends JFrame {
         }
 
         if (taiKhoan.getVaiTro() == VaiTro.ADMIN) {
-            root.add(new AdminView(adminController, taiKhoan, this::dangXuat), ADMIN);
+            xoaManHinhPhienCu();
+            adminView = new AdminView(adminController, taiKhoan, this::dangXuat);
+            root.add(adminView, ADMIN);
             cardLayout.show(root, ADMIN);
         } else {
-            root.add(new HanhKhachView(authController, muaVeController,
-                    this::dangXuat), HANH_KHACH);
+            xoaManHinhPhienCu();
+            hanhKhachView = new HanhKhachView(authController, muaVeController,
+                    this::dangXuat);
+            root.add(hanhKhachView, HANH_KHACH);
             cardLayout.show(root, HANH_KHACH);
         }
+        root.revalidate();
+        root.repaint();
     }
 
     private void dangXuat() {
         authController.dangXuat();
+        xoaManHinhPhienCu();
         hienThiDangNhap();
+    }
+
+    private void xoaManHinhPhienCu() {
+        if (adminView != null) {
+            root.remove(adminView);
+            adminView = null;
+        }
+        if (hanhKhachView != null) {
+            root.remove(hanhKhachView);
+            hanhKhachView = null;
+        }
     }
 
     private void hienThiDangNhap() {

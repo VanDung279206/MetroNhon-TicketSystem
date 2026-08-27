@@ -118,6 +118,16 @@ public class AuthController {
                 taiKhoan.getTenDangNhap()
         );
 
+        if (taiKhoan.getVaiTro() == VaiTro.HANH_KHACH && hanhKhachDangNhap == null) {
+            dangXuat();
+            return null;
+        }
+
+        if (hanhKhachDangNhap != null) {
+            // Dùng chung một đối tượng tài khoản trong phiên để số dư cập nhật ngay.
+            hanhKhachDangNhap.setTaiKhoan(taiKhoanDangNhap);
+        }
+
         return taiKhoanDangNhap;
     }
 

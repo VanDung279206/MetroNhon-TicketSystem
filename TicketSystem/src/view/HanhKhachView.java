@@ -16,6 +16,7 @@ import javax.swing.JPasswordField;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.JTextArea;
+import javax.swing.JTextField;
 import javax.swing.table.DefaultTableModel;
 import java.awt.BorderLayout;
 import java.awt.CardLayout;
@@ -30,6 +31,7 @@ public class HanhKhachView extends JPanel {
     private static final String TONG_QUAN = "TONG_QUAN";
     private static final String MUA_VE = "MUA_VE";
     private static final String LICH_SU = "LICH_SU";
+    private static final String VI_TIEN = "VI_TIEN";
 
     private final AuthController authController;
     private final MuaVeController muaVeController;
@@ -77,6 +79,8 @@ public class HanhKhachView extends JPanel {
                 () -> showView(MUA_VE, "Mua vé Metro"));
         navigationDrawer.addItem("≡  Lịch sử vé",
                 () -> showView(LICH_SU, "Lịch sử vé"));
+        navigationDrawer.addItem("₫  Ví & nạp tiền",
+                () -> showView(VI_TIEN, "Ví Metro"));
         return navigationDrawer;
     }
 
@@ -124,7 +128,9 @@ public class HanhKhachView extends JPanel {
     private void showView(String viewName, String sectionName) {
         currentView = viewName;
         sectionLabel.setText(sectionName);
-        if (TONG_QUAN.equals(viewName) || LICH_SU.equals(viewName)) {
+        if (TONG_QUAN.equals(viewName)
+                || LICH_SU.equals(viewName)
+                || VI_TIEN.equals(viewName)) {
             refreshContent();
         }
         contentLayout.show(content, viewName);
@@ -136,6 +142,7 @@ public class HanhKhachView extends JPanel {
         content.add(new MuaVeView(muaVeController, hanhKhach, this::afterTicketPurchased),
                 MUA_VE);
         content.add(createHistoryPanel(), LICH_SU);
+        content.add(createWalletPanel(), VI_TIEN);
         contentLayout.show(content, currentView);
         content.revalidate();
         content.repaint();
@@ -154,18 +161,19 @@ public class HanhKhachView extends JPanel {
         List<VeMetro> tickets = muaVeController.getDanhSachVeCuaHanhKhach(
                 hanhKhach.getMaHanhKhach()
         );
-        long active = tickets.stream().filter(VeMetro::isTrangThai).count();
+        long active = tickets.stream().filter(muaVeController::veConHieuLuc).count();
 
         JPanel center = new JPanel(new BorderLayout(0, 18));
         center.setOpaque(false);
         JPanel stats = new JPanel(new GridLayout(1, 3, 16, 0));
         stats.setOpaque(false);
+        stats.add(statCard("SỐ DƯ VÍ METRO",
+                Theme.money(hanhKhach.getTaiKhoan().getSoDu()),
+                "Dùng để thanh toán vé", Theme.WARNING));
         stats.add(statCard("TỔNG SỐ VÉ", String.valueOf(tickets.size()),
                 "Vé đã mua", Theme.PRIMARY));
         stats.add(statCard("ĐANG HOẠT ĐỘNG", String.valueOf(active),
                 "Sẵn sàng sử dụng", Theme.ACCENT));
-        stats.add(statCard("TUYẾN ĐANG CHỌN", "08 ga",
-                "Nhổn – Cầu Giấy", Theme.WARNING));
         center.add(stats, BorderLayout.NORTH);
         center.add(createJourneyGuide(), BorderLayout.CENTER);
         panel.add(center, BorderLayout.CENTER);
@@ -331,7 +339,8 @@ public class HanhKhachView extends JPanel {
                     "VE_LUOT".equals(ticket.getLoaiVe()) ? "Vé lượt" : "Vé tháng",
                     Theme.dateTime(ticket.getNgayMua()),
                     Theme.money(ticket.getGiaVe()),
-                    ticket.isTrangThai() ? "Đang hoạt động" : "Hết hiệu lực"
+                    muaVeController.veConHieuLuc(ticket)
+                            ? "Đang hoạt động" : "Hết hiệu lực"
             });
         }
 
@@ -350,6 +359,134 @@ public class HanhKhachView extends JPanel {
         panel.add(heading, BorderLayout.NORTH);
         panel.add(tableCard, BorderLayout.CENTER);
         return panel;
+    }
+
+    private JPanel createWalletPanel() {
+        JPanel panel = new JPanel(new BorderLayout(0, 18));
+        panel.setOpaque(false);
+
+        JPanel heading = new JPanel();
+        heading.setOpaque(false);
+        heading.setLayout(new BoxLayout(heading, BoxLayout.Y_AXIS));
+        JLabel title = Theme.title("Ví Metro", 27);
+        title.setAlignmentX(LEFT_ALIGNMENT);
+        JLabel subtitle = Theme.muted(
+                "Nạp tiền demo và sử dụng số dư để thanh toán vé."
+        );
+        subtitle.setAlignmentX(LEFT_ALIGNMENT);
+        heading.add(title);
+        heading.add(Box.createVerticalStrut(6));
+        heading.add(subtitle);
+
+        JPanel cards = new JPanel(new GridLayout(1, 2, 18, 0));
+        cards.setOpaque(false);
+        cards.add(createBalanceCard());
+        cards.add(createTopUpCard());
+
+        panel.add(heading, BorderLayout.NORTH);
+        panel.add(cards, BorderLayout.CENTER);
+        return panel;
+    }
+
+    private JPanel createBalanceCard() {
+        JPanel card = new Theme.RoundedPanel(26, Theme.PRIMARY_DARK);
+        card.setLayout(new BoxLayout(card, BoxLayout.Y_AXIS));
+        card.setBorder(BorderFactory.createEmptyBorder(30, 30, 30, 30));
+
+        JLabel label = new JLabel("SỐ DƯ KHẢ DỤNG");
+        label.setForeground(new Color(191, 219, 254));
+        label.setFont(label.getFont().deriveFont(Font.BOLD, 12f));
+        label.setAlignmentX(LEFT_ALIGNMENT);
+        JLabel balance = Theme.title(
+                Theme.money(hanhKhach.getTaiKhoan().getSoDu()), 34
+        );
+        balance.setForeground(Color.WHITE);
+        balance.setAlignmentX(LEFT_ALIGNMENT);
+        JLabel account = new JLabel(
+                "@" + hanhKhach.getTaiKhoan().getTenDangNhap()
+        );
+        account.setForeground(new Color(219, 234, 254));
+        account.setAlignmentX(LEFT_ALIGNMENT);
+
+        card.add(label);
+        card.add(Box.createVerticalStrut(16));
+        card.add(balance);
+        card.add(Box.createVerticalStrut(10));
+        card.add(account);
+        card.add(Box.createVerticalGlue());
+        JLabel note = new JLabel("Ví demo • Không liên kết ngân hàng thật");
+        note.setForeground(new Color(147, 197, 253));
+        note.setAlignmentX(LEFT_ALIGNMENT);
+        card.add(note);
+        return card;
+    }
+
+    private JPanel createTopUpCard() {
+        JPanel card = Theme.card();
+        card.setLayout(new BoxLayout(card, BoxLayout.Y_AXIS));
+
+        JLabel title = Theme.title("Nạp tiền", 22);
+        title.setAlignmentX(LEFT_ALIGNMENT);
+        JLabel description = Theme.muted(
+                "Nhập số tiền hoặc chọn nhanh một mệnh giá."
+        );
+        description.setAlignmentX(LEFT_ALIGNMENT);
+
+        JTextField amountField = new JTextField();
+        amountField.setToolTipText("Ví dụ: 100000");
+        Theme.inputStyle(amountField);
+        amountField.setMaximumSize(new Dimension(Integer.MAX_VALUE, 48));
+        amountField.setAlignmentX(LEFT_ALIGNMENT);
+
+        JPanel quickAmounts = new JPanel(new GridLayout(1, 4, 8, 0));
+        quickAmounts.setOpaque(false);
+        quickAmounts.setMaximumSize(new Dimension(Integer.MAX_VALUE, 42));
+        for (int amount : new int[]{50_000, 100_000, 200_000, 500_000}) {
+            JButton button = Theme.secondaryButton(
+                    (amount / 1_000) + "K"
+            );
+            button.addActionListener(event ->
+                    amountField.setText(String.valueOf(amount)));
+            quickAmounts.add(button);
+        }
+
+        JButton topUpButton = Theme.primaryButton("＋ Xác nhận nạp tiền");
+        topUpButton.setMaximumSize(new Dimension(Integer.MAX_VALUE, 48));
+        topUpButton.setAlignmentX(LEFT_ALIGNMENT);
+        topUpButton.addActionListener(event -> napTien(amountField.getText()));
+
+        card.add(title);
+        card.add(Box.createVerticalStrut(8));
+        card.add(description);
+        card.add(Box.createVerticalStrut(22));
+        card.add(new JLabel("Số tiền (VND)"));
+        card.add(Box.createVerticalStrut(8));
+        card.add(amountField);
+        card.add(Box.createVerticalStrut(14));
+        card.add(quickAmounts);
+        card.add(Box.createVerticalGlue());
+        card.add(topUpButton);
+        return card;
+    }
+
+    private void napTien(String giaTri) {
+        try {
+            String daChuanHoa = giaTri == null ? ""
+                    : giaTri.replace(".", "")
+                    .replace(",", "")
+                    .replace(" ", "")
+                    .trim();
+            double soTien = Double.parseDouble(daChuanHoa);
+            double soDuMoi = muaVeController.napTien(hanhKhach, soTien);
+            Theme.success(this, "Nạp tiền thành công\nSố dư mới: "
+                    + Theme.money(soDuMoi));
+            refreshContent();
+            contentLayout.show(content, VI_TIEN);
+        } catch (NumberFormatException e) {
+            Theme.error(this, "Vui lòng nhập số tiền hợp lệ.");
+        } catch (RuntimeException e) {
+            Theme.error(this, e.getMessage());
+        }
     }
 
     private void changePassword() {
@@ -400,6 +537,8 @@ public class HanhKhachView extends JPanel {
         addAccountRow(details, "Mã hành khách", hanhKhach.getMaHanhKhach());
         addAccountRow(details, "Số điện thoại", hanhKhach.getSoDienThoai());
         addAccountRow(details, "Email", hanhKhach.getEmail());
+        addAccountRow(details, "Số dư",
+                Theme.money(hanhKhach.getTaiKhoan().getSoDu()));
         addAccountRow(details, "Trạng thái", "Đang hoạt động");
 
         JOptionPane.showMessageDialog(

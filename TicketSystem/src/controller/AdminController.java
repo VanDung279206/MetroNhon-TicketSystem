@@ -4,6 +4,7 @@ import model.TaiKhoan;
 import model.VaiTro;
 import model.VeMetro;
 
+import java.util.Collections;
 import java.util.List;
 
 /* Chức năng:
@@ -28,11 +29,17 @@ public class AdminController {
 
     // Lấy danh sách tài khoản
     public List<TaiKhoan> getDanhSachTaiKhoan(){
+        if (!coQuyenQuanTri()) {
+            return Collections.emptyList();
+        }
         return authController.getDanhSachTaiKhoan();
     }
 
     //Khóa một tài khoản hành khách
     public boolean khoaTaiKhoan(String tenDangNhap){
+        if (!coQuyenQuanTri()) {
+            return false;
+        }
         TaiKhoan taiKhoan = authController.timTaiKhoan(tenDangNhap);
 
         // Không tìm thấy tài khoản
@@ -58,6 +65,9 @@ public class AdminController {
 
     // Mở khóa tài khoản
     public boolean moKhoaTaiKhoan(String tenDangNhap){
+        if (!coQuyenQuanTri()) {
+            return false;
+        }
         TaiKhoan taiKhoan = authController.timTaiKhoan(tenDangNhap);
 
         // Không tìm thấy tài khoản
@@ -78,6 +88,9 @@ public class AdminController {
 
     // Lấy danh sách vé đã bán.
     public List<VeMetro> getDanhSachVeDaBan(){
+        if (!coQuyenQuanTri()) {
+            return Collections.emptyList();
+        }
         return muaVeController.getDanhSachVeDaBan();
     }
 
@@ -90,5 +103,12 @@ public class AdminController {
         }
 
         return tongDoanhThu;
+    }
+
+    private boolean coQuyenQuanTri() {
+        TaiKhoan taiKhoanDangNhap = authController.getTaiKhoanDangNhap();
+        return taiKhoanDangNhap != null
+                && taiKhoanDangNhap.isTrangThai()
+                && taiKhoanDangNhap.getVaiTro() == VaiTro.ADMIN;
     }
 }
