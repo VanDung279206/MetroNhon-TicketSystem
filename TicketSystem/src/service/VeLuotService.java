@@ -1,12 +1,15 @@
 package service;
 
 import data.VeDataService;
+import exception.GaKhongHopLeException;
 import model.Ga;
 import model.HanhKhach;
 import model.VeLuot;
+import model.VeMetro;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
 
 public class VeLuotService {
 
@@ -21,11 +24,8 @@ public class VeLuotService {
     /**
      * Mua vé lượt.
      *
-     * Vé lượt có hiệu lực trong ngày mua.
-     * Trạng thái ban đầu = true.
-     *
-     * Lưu ý:
-     * Ngày hết hạn không làm thay đổi trangThai của vé.
+     * Vé lượt có hiệu lực trong ngày mua. Trạng thái lưu trữ và
+     * thời hạn sử dụng được kiểm tra riêng khi người dùng xem hoặc dùng vé.
      */
     public VeLuot muaVeLuot(
             HanhKhach hanhKhach,
@@ -38,23 +38,23 @@ public class VeLuotService {
         }
 
         if (gaDi == null) {
-            throw new IllegalArgumentException(
+            throw new GaKhongHopLeException(
                     "Ga đi không được để trống");
         }
 
         if (gaDen == null) {
-            throw new IllegalArgumentException(
+            throw new GaKhongHopLeException(
                     "Ga đến không được để trống");
         }
 
         if (gaDi.getMaGa() == null
                 || gaDen.getMaGa() == null) {
-            throw new IllegalArgumentException(
+            throw new GaKhongHopLeException(
                     "Mã ga không được để trống");
         }
 
         if (gaDi.getMaGa().equalsIgnoreCase(gaDen.getMaGa())) {
-            throw new IllegalArgumentException(
+            throw new GaKhongHopLeException(
                     "Ga đi và ga đến không được giống nhau");
         }
 
@@ -86,16 +86,14 @@ public class VeLuotService {
     }
 
     /**
-     * Kiểm tra vé lượt còn hiệu lực hay không.
-     *
-     * Không thay đổi trangThai của vé.
+     * Kiểm tra cả trạng thái đã lưu và ngày sử dụng của vé lượt.
      */
     public boolean kiemTraHieuLuc(VeLuot veLuot) {
 
         if (veLuot == null) {
             return false;
         }
-        return veLuot.isTrangThai();
+        return veLuot.isConHieuLuc();
     }
 
     /**
@@ -126,9 +124,17 @@ public class VeLuotService {
             return false;
         }
 
-        veLuot.setTrangThai(trangThai);
-
-        return true;
+        List<VeMetro> danhSachVe = veDataService.docDanhSachVe();
+        for (VeMetro ve : danhSachVe) {
+            if (ve instanceof VeLuot
+                    && ve.getMaVe().equalsIgnoreCase(veLuot.getMaVe())) {
+                ve.setTrangThai(trangThai);
+                veDataService.luuDanhSachVe(danhSachVe);
+                veLuot.setTrangThai(trangThai);
+                return true;
+            }
+        }
+        return false;
     }
 
     /**
