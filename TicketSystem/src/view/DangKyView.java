@@ -130,13 +130,19 @@ public class DangKyView extends JPanel {
     }
 
     private void dangKy() {
-        boolean thanhCong = authController.dangKy(
-                tenDangNhapField.getText(),
-                new String(matKhauField.getPassword()),
-                hoTenField.getText(),
-                soDienThoaiField.getText(),
-                emailField.getText()
-        );
+        boolean thanhCong;
+        try {
+            thanhCong = authController.dangKy(
+                    tenDangNhapField.getText(),
+                    new String(matKhauField.getPassword()),
+                    hoTenField.getText(),
+                    soDienThoaiField.getText(),
+                    emailField.getText()
+            );
+        } catch (RuntimeException e) {
+            Theme.error(this, "Không thể lưu đăng ký. Vui lòng thử lại.");
+            return;
+        }
 
         if (!thanhCong) {
             Theme.error(this, "Thông tin chưa hợp lệ hoặc đã được sử dụng.");
