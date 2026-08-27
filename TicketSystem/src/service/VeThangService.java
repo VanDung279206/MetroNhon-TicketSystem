@@ -3,10 +3,12 @@ package service;
 import data.VeDataService;
 import model.HanhKhach;
 import model.LoaiVeThang;
+import model.VeMetro;
 import model.VeThang;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
 
 public class VeThangService implements GiaVeThang {
 
@@ -25,11 +27,7 @@ public class VeThangService implements GiaVeThang {
     /**
      * Mua vé tháng.
      *
-     * Trạng thái ban đầu của vé = true.
-     *
-     * Khi hết ngày kết thúc:
-     * - Không tự set trangThai = false.
-     * - Ngày kết thúc vẫn được lưu trong VeThang.
+     * Ngày hết hạn được giữ riêng để không mất lịch sử trạng thái vé.
      */
     public VeThang muaVeThang(
             HanhKhach hanhKhach,
@@ -100,10 +98,7 @@ public class VeThangService implements GiaVeThang {
     }
 
     /**
-     * Kiểm tra vé tháng còn trong thời gian sử dụng hay không.
-     *
-     * Hàm này chỉ kiểm tra ngày.
-     * Không thay đổi trangThai của vé.
+     * Kiểm tra cả trạng thái đã lưu và khoảng thời gian sử dụng của vé tháng.
      */
     public boolean kiemTraHieuLuc(VeThang veThang) {
 
@@ -111,22 +106,7 @@ public class VeThangService implements GiaVeThang {
             return false;
         }
 
-        /*
-         * Dựa trên dữ liệu được tạo khi mua vé
-         *
-         * Không gọi setTrangThai(false).
-         */
-        LocalDate ngayHienTai = LocalDate.now();
-
-        /*
-         * VeThang hiện được tạo với ngày bắt đầu/kết thúc
-         * trong constructor.
-         *
-         * Trạng thái được giữ độc lập với thời hạn.
-         */
-        return veThang.isTrangThai()
-                && !ngayHienTai.isAfter(
-                        veThang.getNgayHetHan());
+        return veThang.isConHieuLuc();
     }
 
     /**
@@ -154,9 +134,17 @@ public class VeThangService implements GiaVeThang {
             return false;
         }
 
-        veThang.setTrangThai(trangThai);
-
-        return true;
+        List<VeMetro> danhSachVe = veDataService.docDanhSachVe();
+        for (VeMetro ve : danhSachVe) {
+            if (ve instanceof VeThang
+                    && ve.getMaVe().equalsIgnoreCase(veThang.getMaVe())) {
+                ve.setTrangThai(trangThai);
+                veDataService.luuDanhSachVe(danhSachVe);
+                veThang.setTrangThai(trangThai);
+                return true;
+            }
+        }
+        return false;
     }
 
     /**
