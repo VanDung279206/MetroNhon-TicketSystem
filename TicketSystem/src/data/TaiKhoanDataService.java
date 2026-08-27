@@ -39,9 +39,9 @@ public class TaiKhoanDataService {
         // ký tự | đặc biệt trong regex nên phải dùng \\| trong split
         String[] duLieu = x.split("\\|", -1); // -1 giúp giữ lại các trường rỗng
 
-        if (duLieu.length != 4) {
+        if (duLieu.length != 4 && duLieu.length != 5) {
             throw new IllegalArgumentException(
-                    "Dòng dữ liệu phải có 4 thành phần"
+                    "Dòng dữ liệu tài khoản phải có 4 hoặc 5 thành phần"
             );
         }
 
@@ -58,8 +58,13 @@ public class TaiKhoanDataService {
         }
 
         boolean trangThai = Boolean.parseBoolean(chuoiTrangThai);
+        double soDu = duLieu.length == 5
+                ? Double.parseDouble(duLieu[4].trim())
+                : 0;
 
-        TaiKhoan taiKhoan = new TaiKhoan(tenDangNhap, matKhau, vaiTro, trangThai);
+        TaiKhoan taiKhoan = new TaiKhoan(
+                tenDangNhap, matKhau, vaiTro, trangThai, soDu
+        );
 
         kiemTraTaiKhoan(taiKhoan);
 
@@ -97,6 +102,12 @@ public class TaiKhoanDataService {
                     "Tên đăng nhập và mật khẩu không được chứa ký tự |"
             );
         }
+
+        if (!Double.isFinite(x.getSoDu()) || x.getSoDu() < 0) {
+            throw new IllegalArgumentException(
+                    "Số dư tài khoản phải là số không âm"
+            );
+        }
     }
 
     // chuyển tài khoản thành dòng
@@ -107,7 +118,9 @@ public class TaiKhoanDataService {
                 + KY_TU_PHAN_CACH
                 + taiKhoan.getVaiTro().name()
                 + KY_TU_PHAN_CACH
-                + taiKhoan.isTrangThai();
+                + taiKhoan.isTrangThai()
+                + KY_TU_PHAN_CACH
+                + taiKhoan.getSoDu();
     }
 
     // tìm tài khoản theo tên đăng nhập
