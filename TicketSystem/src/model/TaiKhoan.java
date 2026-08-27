@@ -6,12 +6,19 @@ public class TaiKhoan {
     private String matKhau;
     private VaiTro vaiTro;
     private boolean trangThai;
+    private double soDu;
 
     public TaiKhoan(String tenDangNhap, String matKhau, VaiTro vaiTro, boolean trangThai) {
+        this(tenDangNhap, matKhau, vaiTro, trangThai, 0);
+    }
+
+    public TaiKhoan(String tenDangNhap, String matKhau, VaiTro vaiTro,
+                    boolean trangThai, double soDu) {
         this.tenDangNhap = tenDangNhap;
         this.matKhau = matKhau;
         this.vaiTro = vaiTro;
         this.trangThai = trangThai;
+        this.soDu = soDu;
     }
 
     public String getTenDangNhap() {
@@ -46,11 +53,20 @@ public class TaiKhoan {
         this.trangThai = trangThai;
     }
 
+    public double getSoDu() {
+        return soDu;
+    }
+
+    public void setSoDu(double soDu) {
+        this.soDu = soDu;
+    }
+
     @Override
     public String toString() {
         return "Tài Khoản{" +
                 "Tên Đăng Nhập = " + tenDangNhap + '\'' +
                 ", Vai Trò = " + vaiTro +
-                ", Trạng Thái = " + trangThai + "}";
+                ", Trạng Thái = " + trangThai +
+                ", Số Dư = " + soDu + "}";
     } // không đưa mật khẩu vào in tài khoản (không để lộ thông tin bảo mật)
 }
