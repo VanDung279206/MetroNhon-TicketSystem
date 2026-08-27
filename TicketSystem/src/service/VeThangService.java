@@ -126,7 +126,7 @@ public class VeThangService implements GiaVeThang {
          */
         return veThang.isTrangThai()
                 && !ngayHienTai.isAfter(
-                        veThang.getNgayKetThuc());
+                        veThang.getNgayHetHan());
     }
 
     /**
