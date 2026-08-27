@@ -41,6 +41,13 @@ public class VeLuot extends VeMetro {
     }
 
     @Override
+    public boolean isConHieuLuc(LocalDate ngayKiemTra) {
+        return isTrangThai()
+                && ngaySuDung != null
+                && ngaySuDung.equals(ngayKiemTra);
+    }
+
+    @Override
     public String getLoaiVe() {
         return "VE_LUOT";
     }

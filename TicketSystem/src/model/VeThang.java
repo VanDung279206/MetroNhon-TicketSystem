@@ -43,6 +43,15 @@ public class VeThang extends VeMetro {
     }
 
     @Override
+    public boolean isConHieuLuc(LocalDate ngayKiemTra) {
+        return isTrangThai()
+                && ngayBatDau != null
+                && ngayHetHan != null
+                && !ngayKiemTra.isBefore(ngayBatDau)
+                && !ngayKiemTra.isAfter(ngayHetHan);
+    }
+
+    @Override
     public String getLoaiVe() {
         return "VE_THANG";
     }
@@ -54,6 +63,6 @@ public class VeThang extends VeMetro {
                 ngayHetHan + " | " +
                 getGiaVe() + "VND" +
                 " | trạng thái: " +
-                (isTrangThai() ? "Đang hoạt động" : "Đã hết hạn");
+                (isConHieuLuc() ? "Đang hoạt động" : "Đã hết hiệu lực");
     }
 }

@@ -1,5 +1,6 @@
 package model;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 public abstract class VeMetro {
@@ -57,6 +58,12 @@ public abstract class VeMetro {
     public void setTrangThai(boolean trangThai) {
         this.trangThai = trangThai;
     }
+
+    public boolean isConHieuLuc() {
+        return isConHieuLuc(LocalDate.now());
+    }
+
+    public abstract boolean isConHieuLuc(LocalDate ngayKiemTra);
 
     public abstract String getLoaiVe(); // vé lượt và vé tháng
 }
