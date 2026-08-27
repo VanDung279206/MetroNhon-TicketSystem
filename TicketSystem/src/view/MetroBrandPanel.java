@@ -3,6 +3,7 @@ package view;
 import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
+import javax.swing.ImageIcon;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import java.awt.Color;
@@ -11,42 +12,61 @@ import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.GradientPaint;
+import java.awt.Image;
 import java.awt.RenderingHints;
+import java.net.URL;
 
 public class MetroBrandPanel extends JPanel {
     public MetroBrandPanel() {
         setOpaque(false);
         setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
-        setBorder(BorderFactory.createEmptyBorder(74, 64, 64, 64));
+        setBorder(BorderFactory.createEmptyBorder(54, 64, 54, 64));
         setPreferredSize(new Dimension(510, 700));
 
-        JLabel badge = new JLabel("  M  ");
-        badge.setOpaque(true);
-        badge.setBackground(Color.WHITE);
-        badge.setForeground(Theme.PRIMARY);
-        badge.setFont(new Font("Segoe UI", Font.BOLD, 28));
-        badge.setAlignmentX(LEFT_ALIGNMENT);
-        badge.setBorder(BorderFactory.createEmptyBorder(8, 10, 8, 10));
-
-        JLabel title = new JLabel("Metro Nhổn");
-        title.setForeground(Color.WHITE);
-        title.setFont(new Font("Segoe UI", Font.BOLD, 38));
-        title.setAlignmentX(LEFT_ALIGNMENT);
-
-        JLabel subtitle = new JLabel("Di chuyển thông minh, chạm tới tương lai.");
-        subtitle.setForeground(new Color(219, 234, 254));
-        subtitle.setFont(new Font("Segoe UI", Font.PLAIN, 17));
-        subtitle.setAlignmentX(LEFT_ALIGNMENT);
-
-        add(badge);
-        add(Box.createVerticalStrut(30));
-        add(title);
-        add(Box.createVerticalStrut(12));
-        add(subtitle);
+        add(createMetroLogo());
         add(Box.createVerticalGlue());
-        add(routeLabel("●  Nhổn", "Điểm bắt đầu"));
-        add(routeLine());
-        add(routeLabel("●  Cầu Giấy", "8 nhà ga • an toàn • tiện lợi"));
+        add(createRouteCard());
+    }
+
+    private JLabel createMetroLogo() {
+        URL logoUrl = getClass().getResource("/images/hanoi-metro-logo.png");
+        JLabel logo = new JLabel();
+        logo.setAlignmentX(LEFT_ALIGNMENT);
+        logo.setPreferredSize(new Dimension(102, 102));
+        logo.setMaximumSize(new Dimension(102, 102));
+        if (logoUrl != null) {
+            Image logoImage = new ImageIcon(logoUrl).getImage();
+            logo.setIcon(new ImageIcon(logoImage.getScaledInstance(
+                    102, 102, Image.SCALE_SMOOTH)));
+        }
+        return logo;
+    }
+
+    private JPanel createRouteCard() {
+        JPanel card = new Theme.RoundedPanel(24, new Color(255, 255, 255, 30));
+        card.setLayout(new BoxLayout(card, BoxLayout.Y_AXIS));
+        card.setBorder(BorderFactory.createEmptyBorder(22, 24, 22, 24));
+        card.setAlignmentX(LEFT_ALIGNMENT);
+        card.setPreferredSize(new Dimension(360, 214));
+        card.setMaximumSize(new Dimension(360, 214));
+
+        JLabel routeTitle = new JLabel("TUYẾN SỐ 3");
+        routeTitle.setForeground(new Color(219, 234, 254));
+        routeTitle.setFont(routeTitle.getFont().deriveFont(java.awt.Font.BOLD, 12f));
+        routeTitle.setAlignmentX(LEFT_ALIGNMENT);
+        JLabel routeMeta = new JLabel("8 GA • KẾT NỐI ĐÔ THỊ");
+        routeMeta.setForeground(Color.WHITE);
+        routeMeta.setFont(routeMeta.getFont().deriveFont(java.awt.Font.BOLD, 16f));
+        routeMeta.setAlignmentX(LEFT_ALIGNMENT);
+
+        card.add(routeTitle);
+        card.add(Box.createVerticalStrut(5));
+        card.add(routeMeta);
+        card.add(Box.createVerticalStrut(18));
+        card.add(routeLabel("●  Nhổn", "Điểm bắt đầu"));
+        card.add(routeLine());
+        card.add(routeLabel("●  Cầu Giấy", "8 nhà ga • an toàn • tiện lợi"));
+        return card;
     }
 
     private JPanel routeLabel(String station, String note) {
@@ -70,8 +90,8 @@ public class MetroBrandPanel extends JPanel {
     private JPanel routeLine() {
         JPanel line = new JPanel();
         line.setBackground(new Color(96, 165, 250));
-        line.setMaximumSize(new Dimension(3, 70));
-        line.setPreferredSize(new Dimension(3, 70));
+        line.setMaximumSize(new Dimension(3, 48));
+        line.setPreferredSize(new Dimension(3, 48));
         line.setAlignmentX(LEFT_ALIGNMENT);
         return line;
     }
@@ -91,7 +111,24 @@ public class MetroBrandPanel extends JPanel {
         g2.setColor(new Color(255, 255, 255, 18));
         g2.fillOval(getWidth() - 210, -80, 300, 300);
         g2.fillOval(-130, getHeight() - 190, 300, 300);
+        drawDecorativeRoute(g2);
         g2.dispose();
         super.paintComponent(graphics);
+    }
+
+    private void drawDecorativeRoute(Graphics2D g2) {
+        int routeY = Math.max(170, getHeight() / 3);
+        g2.setColor(new Color(255, 255, 255, 28));
+        g2.setStroke(new java.awt.BasicStroke(2.5f,
+                java.awt.BasicStroke.CAP_ROUND, java.awt.BasicStroke.JOIN_ROUND));
+        g2.drawLine(-40, routeY + 65, getWidth() + 40, routeY - 50);
+
+        g2.setColor(new Color(147, 197, 253, 100));
+        int[] offsets = {0, 95, 190, 285, 380};
+        for (int offset : offsets) {
+            int x = offset - 20;
+            int y = routeY + 38 - (int) Math.round(offset * 0.72);
+            g2.fillOval(x - 5, y - 5, 10, 10);
+        }
     }
 }
