@@ -5,6 +5,7 @@ import data.GaDataService;
 import data.HanhKhachDataService;
 import data.TaiKhoanDataService;
 import data.VeDataService;
+import exception.VeThangDangHoatDongException;
 import model.Ga;
 import model.HanhKhach;
 import model.LoaiVeThang;
@@ -23,7 +24,8 @@ public class MuaVeIntegrationTest {
         khoiTaoDuLieuKiemThu();
 
         TaiKhoan taiKhoan = new TaiKhoan(
-                "khach_test", "123456", VaiTro.HANH_KHACH, true
+                "khach_test", "123456", VaiTro.HANH_KHACH, true,
+                1_000_000
         );
         kiemTra(new TaiKhoanDataService().themTaiKhoan(taiKhoan),
                 "Phải lưu được tài khoản kiểm thử");
@@ -43,22 +45,25 @@ public class MuaVeIntegrationTest {
         VeThang vePhoThong = controller.muaVeThang(
                 hanhKhach, LoaiVeThang.PHO_THONG
         );
-        VeThang veUuDai = controller.muaVeThang(
-                hanhKhach, LoaiVeThang.UU_DAI
-        );
+        boolean daChanVeThangThuHai = false;
+        try {
+            controller.muaVeThang(hanhKhach, LoaiVeThang.UU_DAI);
+        } catch (VeThangDangHoatDongException e) {
+            daChanVeThangThuHai = true;
+        }
 
         kiemTra("VL001".equals(veLuotDau.getMaVe()),
                 "Mã vé lượt đầu tiên phải là VL001");
         kiemTra("VT001".equals(vePhoThong.getMaVe()),
                 "Mã vé tháng đầu tiên phải là VT001");
-        kiemTra(veUuDai.getGiaVe() == 140000,
-                "Vé tháng ưu đãi phải có giá 140000");
+        kiemTra(daChanVeThangThuHai,
+                "Không được mua vé tháng thứ hai khi vé cũ còn hiệu lực");
 
         // Tạo controller mới để mô phỏng người dùng đóng rồi mở lại ứng dụng.
         MuaVeController controllerSauKhiMoLai = new MuaVeController();
         List<VeMetro> danhSachDaLuu = controllerSauKhiMoLai.getDanhSachVeDaBan();
-        kiemTra(danhSachDaLuu.size() == 3,
-                "Ba vé phải còn trong file sau khi mở lại ứng dụng");
+        kiemTra(danhSachDaLuu.size() == 2,
+                "Hai vé hợp lệ phải còn trong file sau khi mở lại ứng dụng");
 
         VeLuot veLuotTiepTheo = controllerSauKhiMoLai.muaVeLuot(
                 hanhKhach, "G08", "G01"
@@ -66,7 +71,7 @@ public class MuaVeIntegrationTest {
         kiemTra("VL002".equals(veLuotTiepTheo.getMaVe()),
                 "Mã vé lượt phải tăng tiếp từ dữ liệu đã lưu");
         kiemTra(controllerSauKhiMoLai
-                        .getDanhSachVeCuaHanhKhach("HK001").size() == 4,
+                        .getDanhSachVeCuaHanhKhach("HK001").size() == 3,
                 "Phải tìm được toàn bộ vé của hành khách");
 
         System.out.println("TẤT CẢ KIỂM THỬ MUA VÉ ĐỀU THÀNH CÔNG");
