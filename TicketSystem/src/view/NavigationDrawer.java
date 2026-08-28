@@ -22,10 +22,7 @@ public class NavigationDrawer extends JPanel {
     private final JPanel navigation = new JPanel();
     private final List<JButton> navigationButtons = new ArrayList<>();
 
-    public NavigationDrawer(String role,
-                            String displayName,
-                            Runnable onClose,
-                            Runnable onLogout) {
+    public NavigationDrawer(Runnable onClose) {
         setOpaque(false);
         setLayout(new BorderLayout());
         setPreferredSize(new Dimension(286, 700));
@@ -41,24 +38,17 @@ public class NavigationDrawer extends JPanel {
         navigation.setLayout(new BoxLayout(navigation, BoxLayout.Y_AXIS));
         drawer.add(navigation, BorderLayout.CENTER);
 
-        JPanel footer = new JPanel();
-        footer.setOpaque(false);
-        footer.setLayout(new BoxLayout(footer, BoxLayout.Y_AXIS));
-        footer.add(createProfileCard(role, displayName));
-        footer.add(Box.createVerticalStrut(12));
-
-        JButton logoutButton = Theme.navButton("↪  Đăng xuất");
-        logoutButton.setAlignmentX(LEFT_ALIGNMENT);
-        logoutButton.setMaximumSize(new Dimension(Integer.MAX_VALUE, 46));
-        logoutButton.addActionListener(event -> onLogout.run());
-        footer.add(logoutButton);
-        drawer.add(footer, BorderLayout.SOUTH);
-
         add(drawer, BorderLayout.CENTER);
     }
 
     public JButton addItem(String label, Runnable action) {
-        JButton button = Theme.navButton(label);
+        return addItem(label, null, action);
+    }
+
+    public JButton addItem(String label, String iconPath, Runnable action) {
+        JButton button = iconPath == null
+                ? Theme.navButton(label)
+                : Theme.navButton(label, iconPath);
         button.setAlignmentX(LEFT_ALIGNMENT);
         button.setMaximumSize(new Dimension(Integer.MAX_VALUE, 48));
         button.addActionListener(event -> {
@@ -81,13 +71,10 @@ public class NavigationDrawer extends JPanel {
 
         JPanel brand = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 0));
         brand.setOpaque(false);
-        JLabel logo = new JLabel("M", JLabel.CENTER);
-        logo.setOpaque(true);
-        logo.setBackground(Color.WHITE);
-        logo.setForeground(Theme.PRIMARY);
-        logo.setFont(logo.getFont().deriveFont(Font.BOLD, 17f));
-        logo.setPreferredSize(new Dimension(38, 38));
-        logo.setBorder(BorderFactory.createEmptyBorder(6, 6, 6, 6));
+        JLabel logo = new JLabel(Theme.icon(
+                "/images/hanoi-metro-logo.png", 46, 46
+        ));
+        logo.setPreferredSize(new Dimension(46, 46));
 
         JLabel title = new JLabel("METRO NHỔN");
         title.setForeground(Color.WHITE);
@@ -104,41 +91,10 @@ public class NavigationDrawer extends JPanel {
         return header;
     }
 
-    private JPanel createProfileCard(String role, String displayName) {
-        JPanel profile = new Theme.RoundedPanel(20, Theme.PRIMARY_DARKER);
-        profile.setLayout(new BorderLayout(12, 0));
-        profile.setBorder(BorderFactory.createEmptyBorder(12, 12, 12, 12));
-
-        JLabel avatar = new JLabel(Theme.initials(displayName), JLabel.CENTER);
-        avatar.setOpaque(true);
-        avatar.setBackground(new Color(219, 234, 254));
-        avatar.setForeground(Theme.PRIMARY_DARK);
-        avatar.setFont(avatar.getFont().deriveFont(Font.BOLD, 13f));
-        avatar.setPreferredSize(new Dimension(38, 38));
-
-        JPanel text = new JPanel();
-        text.setOpaque(false);
-        text.setLayout(new BoxLayout(text, BoxLayout.Y_AXIS));
-        JLabel name = new JLabel(displayName);
-        name.setForeground(Color.WHITE);
-        name.setFont(name.getFont().deriveFont(Font.BOLD, 13f));
-        JLabel roleLabel = new JLabel(role);
-        roleLabel.setForeground(new Color(191, 219, 254));
-        roleLabel.setFont(roleLabel.getFont().deriveFont(12f));
-        text.add(name);
-        text.add(Box.createVerticalStrut(3));
-        text.add(roleLabel);
-
-        profile.add(avatar, BorderLayout.WEST);
-        profile.add(text, BorderLayout.CENTER);
-        return profile;
-    }
-
     private void select(JButton selectedButton) {
         for (JButton button : navigationButtons) {
             boolean selected = button == selectedButton;
-            button.setBackground(selected ? Theme.PRIMARY : Theme.PRIMARY_DARK);
-            button.setForeground(selected ? Color.WHITE : new Color(219, 234, 254));
+            Theme.updateNavigationButton(button, selected);
         }
     }
 }
