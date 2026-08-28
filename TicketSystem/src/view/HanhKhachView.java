@@ -2,19 +2,25 @@ package view;
 
 import controller.AuthController;
 import controller.MuaVeController;
+import model.Ga;
 import model.HanhKhach;
+import model.LuotSuDungVe;
+import model.PhieuHuyVe;
+import model.VeLuot;
 import model.VeMetro;
 
 import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
+import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JPasswordField;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
+import javax.swing.JTabbedPane;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.table.DefaultTableModel;
@@ -41,6 +47,7 @@ public class HanhKhachView extends JPanel {
     private final JPanel workspace = new JPanel(new BorderLayout());
     private final JLabel sectionLabel = Theme.muted("Tổng quan");
     private NavigationDrawer drawer;
+    private JButton accountButton;
     private String currentView = TONG_QUAN;
 
     public HanhKhachView(AuthController authController,
@@ -53,7 +60,7 @@ public class HanhKhachView extends JPanel {
         setLayout(new BorderLayout());
         setBackground(Theme.BACKGROUND);
 
-        drawer = createDrawer(onLogout);
+        drawer = createDrawer();
         workspace.setOpaque(false);
         workspace.add(drawer, BorderLayout.WEST);
 
@@ -68,19 +75,26 @@ public class HanhKhachView extends JPanel {
         showView(TONG_QUAN, "Tổng quan");
     }
 
-    private NavigationDrawer createDrawer(Runnable onLogout) {
-        String displayName = hanhKhach == null ? "Hành khách" : hanhKhach.getHoTen();
+    private NavigationDrawer createDrawer() {
         NavigationDrawer navigationDrawer = new NavigationDrawer(
-                "Tài khoản hành khách", displayName, this::toggleDrawer, onLogout
+                this::toggleDrawer
         );
-        navigationDrawer.addItem("⌂  Tổng quan",
-                () -> showView(TONG_QUAN, "Tổng quan"));
-        navigationDrawer.addItem("▣  Mua vé",
-                () -> showView(MUA_VE, "Mua vé Metro"));
-        navigationDrawer.addItem("≡  Lịch sử vé",
-                () -> showView(LICH_SU, "Lịch sử vé"));
-        navigationDrawer.addItem("₫  Ví & nạp tiền",
-                () -> showView(VI_TIEN, "Ví Metro"));
+        navigationDrawer.addItem(
+                "Tổng quan", "/images/edit.png",
+                () -> showView(TONG_QUAN, "Tổng quan")
+        );
+        navigationDrawer.addItem(
+                "Mua vé", "/images/ticket-alt.png",
+                () -> showView(MUA_VE, "Mua vé Metro")
+        );
+        navigationDrawer.addItem(
+                "Lịch sử vé", "/images/ticket.png",
+                () -> showView(LICH_SU, "Lịch sử vé")
+        );
+        navigationDrawer.addItem(
+                "Ví và nạp tiền", "/images/wallet.png",
+                () -> showView(VI_TIEN, "Ví Metro")
+        );
         return navigationDrawer;
     }
 
@@ -95,8 +109,10 @@ public class HanhKhachView extends JPanel {
 
         JPanel left = new JPanel(new FlowLayout(FlowLayout.LEFT, 12, 0));
         left.setOpaque(false);
-        JButton menuButton = Theme.ghostButton("☰  Danh mục");
-        menuButton.setToolTipText("Mở hoặc thu gọn thanh chức năng");
+        JButton menuButton = Theme.ghostIconButton(
+                "/images/menu-burger.png",
+                "Mở hoặc thu gọn thanh chức năng"
+        );
         menuButton.addActionListener(event -> toggleDrawer());
 
         sectionLabel.setFont(sectionLabel.getFont().deriveFont(Font.BOLD));
@@ -104,14 +120,20 @@ public class HanhKhachView extends JPanel {
         left.add(sectionLabel);
 
         String name = hanhKhach == null ? "Hành khách" : hanhKhach.getHoTen();
-        String username = hanhKhach == null || hanhKhach.getTaiKhoan() == null
-                ? "hanhkhach" : hanhKhach.getTaiKhoan().getTenDangNhap();
-        String detail = hanhKhach == null ? "Tài khoản hành khách" : hanhKhach.getEmail();
-        JButton accountButton = Theme.accountButton(name);
-        accountButton.addActionListener(event -> Theme.showAccountMenu(
-                accountButton, name, username, detail,
-                this::showAccountDetails, this::changePassword, onLogout
-        ));
+        accountButton = Theme.accountButton(name);
+        accountButton.addActionListener(event -> {
+            String currentName = hanhKhach == null
+                    ? "Hành khách" : hanhKhach.getHoTen();
+            String username = hanhKhach == null || hanhKhach.getTaiKhoan() == null
+                    ? "hanhkhach" : hanhKhach.getTaiKhoan().getTenDangNhap();
+            String detail = hanhKhach == null
+                    ? "Tài khoản hành khách" : hanhKhach.getEmail();
+            Theme.showAccountMenu(
+                    accountButton, currentName, username, detail,
+                    this::showAccountDetails, this::editAccountDetails,
+                    this::changePassword, onLogout
+            );
+        });
 
         bar.add(left, BorderLayout.WEST);
         bar.add(accountButton, BorderLayout.EAST);
@@ -254,7 +276,7 @@ public class HanhKhachView extends JPanel {
         steps.add(stepCard("02", "Xác nhận loại vé",
                 "Vé lượt hoặc vé tháng phù hợp."));
         steps.add(stepCard("03", "Nhận vé điện tử",
-                "Mã vé được lưu trong lịch sử."));
+                "Mở lịch sử và sử dụng vé khi lên tàu."));
 
         guide.add(heading, BorderLayout.NORTH);
         guide.add(steps, BorderLayout.CENTER);
@@ -315,18 +337,36 @@ public class HanhKhachView extends JPanel {
         titles.setLayout(new BoxLayout(titles, BoxLayout.Y_AXIS));
         JLabel title = Theme.title("Lịch sử vé", 27);
         title.setAlignmentX(LEFT_ALIGNMENT);
-        JLabel subtitle = Theme.muted("Theo dõi toàn bộ vé đã mua và trạng thái sử dụng.");
+        JLabel subtitle = Theme.muted(
+                "Theo dõi vé đã mua, lượt sử dụng và các khoản hoàn tiền."
+        );
         subtitle.setAlignmentX(LEFT_ALIGNMENT);
         titles.add(title);
         titles.add(Box.createVerticalStrut(6));
         titles.add(subtitle);
+
+        JTextField searchField = new JTextField();
+        searchField.putClientProperty(
+                "JTextField.placeholderText",
+                "Tìm mã vé, loại vé, trạng thái..."
+        );
+        searchField.setPreferredSize(new Dimension(270, 42));
+        Theme.inputStyle(searchField);
         JButton buyButton = Theme.primaryButton("＋ Mua vé mới");
         buyButton.addActionListener(event -> showView(MUA_VE, "Mua vé Metro"));
-        heading.add(titles, BorderLayout.WEST);
-        heading.add(buyButton, BorderLayout.EAST);
 
-        String[] columns = {"Mã vé", "Loại vé", "Ngày mua", "Giá vé", "Trạng thái"};
-        DefaultTableModel model = new DefaultTableModel(columns, 0) {
+        JPanel headingActions = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
+        headingActions.setOpaque(false);
+        headingActions.add(searchField);
+        headingActions.add(buyButton);
+        heading.add(titles, BorderLayout.WEST);
+        heading.add(headingActions, BorderLayout.EAST);
+
+        String[] columns = {
+                "Mã vé", "Loại vé", "Ngày mua", "Giá vé",
+                "Lượt dùng", "Trạng thái"
+        };
+        DefaultTableModel ticketModel = new DefaultTableModel(columns, 0) {
             @Override
             public boolean isCellEditable(int row, int column) {
                 return false;
@@ -334,31 +374,274 @@ public class HanhKhachView extends JPanel {
         };
         for (VeMetro ticket : muaVeController.getDanhSachVeCuaHanhKhach(
                 hanhKhach.getMaHanhKhach())) {
-            model.addRow(new Object[]{
+            ticketModel.addRow(new Object[]{
                     ticket.getMaVe(),
                     "VE_LUOT".equals(ticket.getLoaiVe()) ? "Vé lượt" : "Vé tháng",
                     Theme.dateTime(ticket.getNgayMua()),
                     Theme.money(ticket.getGiaVe()),
-                    muaVeController.veConHieuLuc(ticket)
-                            ? "Đang hoạt động" : "Hết hiệu lực"
+                    muaVeController.getSoLuotSuDung(ticket.getMaVe()),
+                    getTicketStatus(ticket)
             });
         }
 
-        JTable table = new JTable(model);
+        JTable ticketTable = new JTable(ticketModel);
+        styleTable(ticketTable);
+
+        JButton cancelButton = Theme.dangerButton("Hủy vé & hoàn tiền");
+        cancelButton.addActionListener(event -> cancelSelectedTicket(
+                ticketTable, ticketModel
+        ));
+        JButton useButton = Theme.primaryButton("▶  Sử dụng vé đã chọn");
+        useButton.addActionListener(event -> useSelectedTicket(
+                ticketTable, ticketModel
+        ));
+        JPanel ticketActions = new JPanel(
+                new FlowLayout(FlowLayout.RIGHT, 10, 0)
+        );
+        ticketActions.setOpaque(false);
+        ticketActions.add(Theme.muted(
+                "Chưa sử dụng: vé lượt hoàn 90% • vé tháng hoàn 80%"
+        ));
+        ticketActions.add(cancelButton);
+        ticketActions.add(useButton);
+
+        JPanel ticketPanel = Theme.card();
+        ticketPanel.setLayout(new BorderLayout(0, 12));
+        ticketPanel.add(new JScrollPane(ticketTable), BorderLayout.CENTER);
+        ticketPanel.add(ticketActions, BorderLayout.SOUTH);
+
+        String[] usageColumns = {
+                "Mã lượt", "Mã vé", "Ga đi", "Ga đến", "Thời gian sử dụng"
+        };
+        DefaultTableModel usageModel = new DefaultTableModel(usageColumns, 0) {
+            @Override
+            public boolean isCellEditable(int row, int column) {
+                return false;
+            }
+        };
+        for (LuotSuDungVe usage :
+                muaVeController.getDanhSachLuotSuDungCuaHanhKhach(
+                        hanhKhach.getMaHanhKhach())) {
+            usageModel.addRow(new Object[]{
+                    usage.getMaLuotSuDung(),
+                    usage.getMaVe(),
+                    muaVeController.getTenGa(usage.getMaGaDi()),
+                    muaVeController.getTenGa(usage.getMaGaDen()),
+                    Theme.dateTime(usage.getThoiGianSuDung())
+            });
+        }
+
+        JTable usageTable = new JTable(usageModel);
+        styleTable(usageTable);
+        JPanel usagePanel = Theme.card();
+        usagePanel.setLayout(new BorderLayout());
+        usagePanel.add(new JScrollPane(usageTable), BorderLayout.CENTER);
+
+        String[] cancellationColumns = {
+                "Mã hủy", "Mã vé", "Thời gian", "Giá vé gốc",
+                "Tỷ lệ hoàn", "Tiền hoàn", "Lý do"
+        };
+        DefaultTableModel cancellationModel = new DefaultTableModel(
+                cancellationColumns, 0
+        ) {
+            @Override
+            public boolean isCellEditable(int row, int column) {
+                return false;
+            }
+        };
+        for (PhieuHuyVe cancellation :
+                muaVeController.getDanhSachPhieuHuyCuaHanhKhach(
+                        hanhKhach.getMaHanhKhach())) {
+            cancellationModel.addRow(new Object[]{
+                    cancellation.getMaPhieuHuy(),
+                    cancellation.getMaVe(),
+                    Theme.dateTime(cancellation.getThoiGianHuy()),
+                    Theme.money(cancellation.getGiaVeGoc()),
+                    Math.round(cancellation.getTyLeHoan() * 100) + "%",
+                    Theme.money(cancellation.getSoTienHoan()),
+                    cancellation.getLyDo()
+            });
+        }
+
+        JTable cancellationTable = new JTable(cancellationModel);
+        styleTable(cancellationTable);
+        JPanel cancellationPanel = Theme.card();
+        cancellationPanel.setLayout(new BorderLayout());
+        cancellationPanel.add(
+                new JScrollPane(cancellationTable), BorderLayout.CENTER
+        );
+
+        Theme.enableTableSearch(
+                searchField, ticketTable, usageTable, cancellationTable
+        );
+
+        JTabbedPane tabs = new JTabbedPane();
+        tabs.putClientProperty("JTabbedPane.tabType", "card");
+        tabs.addTab("Vé của tôi", ticketPanel);
+        tabs.addTab("Lịch sử sử dụng", usagePanel);
+        tabs.addTab("Lịch sử hoàn tiền", cancellationPanel);
+
+        panel.add(heading, BorderLayout.NORTH);
+        panel.add(tabs, BorderLayout.CENTER);
+        return panel;
+    }
+
+    private void styleTable(JTable table) {
         table.setFillsViewportHeight(true);
         table.setSelectionBackground(Theme.PRIMARY_SOFT);
         table.setSelectionForeground(Theme.TEXT);
         table.setShowVerticalLines(false);
-        JScrollPane scrollPane = new JScrollPane(table);
-        scrollPane.setBorder(BorderFactory.createEmptyBorder());
+    }
 
-        JPanel tableCard = Theme.card();
-        tableCard.setLayout(new BorderLayout());
-        tableCard.add(scrollPane, BorderLayout.CENTER);
+    private String getTicketStatus(VeMetro ticket) {
+        if (muaVeController.daHuyVe(ticket.getMaVe())) {
+            return "Đã hủy";
+        }
+        if (muaVeController.veConHieuLuc(ticket)) {
+            return "Có thể sử dụng";
+        }
+        if (ticket instanceof VeLuot
+                && muaVeController.getSoLuotSuDung(ticket.getMaVe()) > 0) {
+            return "Đã sử dụng";
+        }
+        if (!ticket.isTrangThai()) {
+            return "Đã vô hiệu hóa";
+        }
+        return "Hết hạn";
+    }
 
-        panel.add(heading, BorderLayout.NORTH);
-        panel.add(tableCard, BorderLayout.CENTER);
-        return panel;
+    private void cancelSelectedTicket(JTable table, DefaultTableModel model) {
+        int selectedRow = table.getSelectedRow();
+        if (selectedRow < 0) {
+            Theme.error(this, "Hãy chọn một vé trong bảng.");
+            return;
+        }
+
+        int modelRow = table.convertRowIndexToModel(selectedRow);
+        String maVe = String.valueOf(model.getValueAt(modelRow, 0));
+        try {
+            double soTienHoan = muaVeController.tinhTienHoanDuKien(
+                    hanhKhach, maVe
+            );
+            JTextField reasonField = new JTextField();
+            reasonField.putClientProperty(
+                    "JTextField.placeholderText", "Lý do hủy (không bắt buộc)"
+            );
+            Theme.inputStyle(reasonField);
+
+            JPanel form = new JPanel(new GridLayout(0, 1, 0, 10));
+            form.setBorder(BorderFactory.createEmptyBorder(8, 8, 8, 8));
+            form.add(new JLabel("Mã vé: " + maVe));
+            form.add(new JLabel("Số tiền dự kiến hoàn: "
+                    + Theme.money(soTienHoan)));
+            form.add(new JLabel(
+                    "Vé sẽ bị vô hiệu hóa ngay sau khi xác nhận."
+            ));
+            form.add(reasonField);
+
+            int confirm = JOptionPane.showConfirmDialog(
+                    this, form, "Xác nhận hủy vé",
+                    JOptionPane.OK_CANCEL_OPTION,
+                    JOptionPane.WARNING_MESSAGE
+            );
+            if (confirm != JOptionPane.OK_OPTION) {
+                return;
+            }
+
+            PhieuHuyVe cancellation = muaVeController.huyVe(
+                    hanhKhach, maVe, reasonField.getText()
+            );
+            Theme.success(this, "Hủy vé thành công\nMã giao dịch: "
+                    + cancellation.getMaPhieuHuy()
+                    + "\nĐã hoàn: "
+                    + Theme.money(cancellation.getSoTienHoan())
+                    + "\nSố dư mới: "
+                    + Theme.money(hanhKhach.getTaiKhoan().getSoDu()));
+            refreshContent();
+            contentLayout.show(content, LICH_SU);
+        } catch (RuntimeException e) {
+            Theme.error(this, e.getMessage());
+        }
+    }
+
+    private void useSelectedTicket(JTable table, DefaultTableModel model) {
+        int selectedRow = table.getSelectedRow();
+        if (selectedRow < 0) {
+            Theme.error(this, "Hãy chọn một vé trong bảng.");
+            return;
+        }
+
+        int modelRow = table.convertRowIndexToModel(selectedRow);
+        String maVe = String.valueOf(model.getValueAt(modelRow, 0));
+        VeMetro ticket = muaVeController.timVeCuaHanhKhach(hanhKhach, maVe);
+        if (ticket == null) {
+            Theme.error(this, "Không tìm thấy vé " + maVe + ".");
+            return;
+        }
+
+        String maGaDi = null;
+        String maGaDen = null;
+        if (ticket instanceof VeLuot) {
+            VeLuot veLuot = (VeLuot) ticket;
+            int confirm = JOptionPane.showConfirmDialog(
+                    this,
+                    "Sử dụng vé " + maVe + " cho hành trình\n"
+                            + veLuot.getGaDi().getTenGa() + " → "
+                            + veLuot.getGaDen().getTenGa() + "?\n"
+                            + "Vé lượt sẽ hết hiệu lực sau thao tác này.",
+                    "Xác nhận sử dụng vé",
+                    JOptionPane.OK_CANCEL_OPTION,
+                    JOptionPane.QUESTION_MESSAGE
+            );
+            if (confirm != JOptionPane.OK_OPTION) {
+                return;
+            }
+        } else {
+            List<Ga> stations = muaVeController.getDanhSachGa();
+            JComboBox<Ga> gaDiCombo = new JComboBox<>(
+                    stations.toArray(new Ga[0])
+            );
+            JComboBox<Ga> gaDenCombo = new JComboBox<>(
+                    stations.toArray(new Ga[0])
+            );
+            if (stations.size() > 1) {
+                gaDenCombo.setSelectedIndex(stations.size() - 1);
+            }
+            Theme.inputStyle(gaDiCombo);
+            Theme.inputStyle(gaDenCombo);
+            JPanel routeForm = new JPanel(new GridLayout(0, 1, 0, 8));
+            routeForm.setBorder(BorderFactory.createEmptyBorder(8, 8, 8, 8));
+            routeForm.add(new JLabel("Ga đi"));
+            routeForm.add(gaDiCombo);
+            routeForm.add(new JLabel("Ga đến"));
+            routeForm.add(gaDenCombo);
+
+            int confirm = JOptionPane.showConfirmDialog(
+                    this, routeForm, "Sử dụng vé tháng " + maVe,
+                    JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE
+            );
+            if (confirm != JOptionPane.OK_OPTION) {
+                return;
+            }
+            Ga gaDi = (Ga) gaDiCombo.getSelectedItem();
+            Ga gaDen = (Ga) gaDenCombo.getSelectedItem();
+            maGaDi = gaDi == null ? null : gaDi.getMaGa();
+            maGaDen = gaDen == null ? null : gaDen.getMaGa();
+        }
+
+        try {
+            LuotSuDungVe usage = muaVeController.suDungVe(
+                    hanhKhach, maVe, maGaDi, maGaDen
+            );
+            Theme.success(this, "Sử dụng vé thành công\nMã lượt: "
+                    + usage.getMaLuotSuDung() + "\n"
+                    + muaVeController.getTenGa(usage.getMaGaDi()) + " → "
+                    + muaVeController.getTenGa(usage.getMaGaDen()));
+            refreshContent();
+            contentLayout.show(content, LICH_SU);
+        } catch (RuntimeException e) {
+            Theme.error(this, e.getMessage());
+        }
     }
 
     private JPanel createWalletPanel() {
@@ -414,10 +697,6 @@ public class HanhKhachView extends JPanel {
         card.add(Box.createVerticalStrut(10));
         card.add(account);
         card.add(Box.createVerticalGlue());
-        JLabel note = new JLabel("Ví demo • Không liên kết ngân hàng thật");
-        note.setForeground(new Color(147, 197, 253));
-        note.setAlignmentX(LEFT_ALIGNMENT);
-        card.add(note);
         return card;
     }
 
@@ -450,7 +729,7 @@ public class HanhKhachView extends JPanel {
             quickAmounts.add(button);
         }
 
-        JButton topUpButton = Theme.primaryButton("＋ Xác nhận nạp tiền");
+        JButton topUpButton = Theme.primaryButton(" Xác nhận nạp tiền");
         topUpButton.setMaximumSize(new Dimension(Integer.MAX_VALUE, 48));
         topUpButton.setAlignmentX(LEFT_ALIGNMENT);
         topUpButton.addActionListener(event -> napTien(amountField.getText()));
@@ -545,6 +824,48 @@ public class HanhKhachView extends JPanel {
                 this, details, "Thông tin tài khoản",
                 JOptionPane.PLAIN_MESSAGE
         );
+    }
+
+    private void editAccountDetails() {
+        JTextField nameField = new JTextField(hanhKhach.getHoTen());
+        JTextField phoneField = new JTextField(hanhKhach.getSoDienThoai());
+        JTextField emailField = new JTextField(hanhKhach.getEmail());
+        Theme.inputStyle(nameField);
+        Theme.inputStyle(phoneField);
+        Theme.inputStyle(emailField);
+
+        JPanel form = new JPanel(new GridLayout(0, 1, 0, 8));
+        form.setBorder(BorderFactory.createEmptyBorder(8, 8, 8, 8));
+        form.add(new JLabel("Họ và tên"));
+        form.add(nameField);
+        form.add(new JLabel("Số điện thoại"));
+        form.add(phoneField);
+        form.add(new JLabel("Email"));
+        form.add(emailField);
+
+        int result = JOptionPane.showConfirmDialog(
+                this, form, "Thay đổi thông tin",
+                JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE
+        );
+        if (result != JOptionPane.OK_OPTION) {
+            return;
+        }
+
+        try {
+            boolean success = authController.capNhatThongTinHanhKhach(
+                    nameField.getText(), phoneField.getText(), emailField.getText()
+            );
+            if (!success) {
+                Theme.error(this, "Không thể cập nhật thông tin hành khách.");
+                return;
+            }
+
+            Theme.updateAccountButton(accountButton, hanhKhach.getHoTen());
+            refreshContent();
+            Theme.success(this, "Cập nhật thông tin thành công.");
+        } catch (RuntimeException e) {
+            Theme.error(this, e.getMessage());
+        }
     }
 
     private void addAccountRow(JPanel panel, String labelText, String valueText) {
