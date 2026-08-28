@@ -230,6 +230,51 @@ public class HanhKhachDataService {
         return true;
     }
 
+    public boolean capNhatThongTin(String maHanhKhach, String hoTen,
+                                   String soDienThoai, String email) {
+        if (maHanhKhach == null || maHanhKhach.trim().isEmpty()) {
+            return false;
+        }
+
+        if (hoTen == null || hoTen.trim().isEmpty()
+                || soDienThoai == null || soDienThoai.trim().isEmpty()
+                || email == null || email.trim().isEmpty()) {
+            throw new IllegalArgumentException(
+                    "Thông tin cập nhật không được để trống"
+            );
+        }
+
+        List<HanhKhach> danhSach = docDanhSachHanhKhach();
+        HanhKhach canCapNhat = null;
+        for (HanhKhach x : danhSach) {
+            if (x.getMaHanhKhach().equalsIgnoreCase(maHanhKhach.trim())) {
+                canCapNhat = x;
+            } else {
+                if (x.getSoDienThoai().equals(soDienThoai.trim())) {
+                    throw new IllegalArgumentException(
+                            "Số điện thoại đã được tài khoản khác sử dụng"
+                    );
+                }
+                if (x.getEmail().equalsIgnoreCase(email.trim())) {
+                    throw new IllegalArgumentException(
+                            "Email đã được tài khoản khác sử dụng"
+                    );
+                }
+            }
+        }
+
+        if (canCapNhat == null) {
+            return false;
+        }
+
+        canCapNhat.setHoTen(hoTen.trim());
+        canCapNhat.setSoDienThoai(soDienThoai.trim());
+        canCapNhat.setEmail(email.trim());
+        kiemTraHanhKhach(canCapNhat);
+        luuDanhSachHanhKhach(danhSach);
+        return true;
+    }
+
     // ghi đè toàn bộ danh sách hành khách
     public void luuDanhSachHanhKhach(List<HanhKhach> danhSachHanhKhach) {
         if (danhSachHanhKhach == null) {
