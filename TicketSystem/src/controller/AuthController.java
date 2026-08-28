@@ -180,6 +180,47 @@ public class AuthController {
         return false;
     }
 
+    public boolean capNhatThongTinHanhKhach(String hoTen,
+                                            String soDienThoai,
+                                            String email) {
+        if (hanhKhachDangNhap == null) {
+            return false;
+        }
+
+        if (isRong(hoTen) || isRong(soDienThoai) || isRong(email)) {
+            throw new IllegalArgumentException(
+                    "Họ tên, số điện thoại và email không được để trống"
+            );
+        }
+
+        hoTen = hoTen.trim();
+        soDienThoai = soDienThoai.trim();
+        email = email.trim();
+
+        if (hoTen.length() < 2) {
+            throw new IllegalArgumentException("Họ tên chưa hợp lệ");
+        }
+        if (!soDienThoai.matches("(?:0|\\+84)\\d{9}")) {
+            throw new IllegalArgumentException(
+                    "Số điện thoại phải có dạng 0xxxxxxxxx hoặc +84xxxxxxxxx"
+            );
+        }
+        if (!email.matches("[^\\s@]+@[^\\s@]+\\.[^\\s@]+")) {
+            throw new IllegalArgumentException("Email chưa đúng định dạng");
+        }
+
+        boolean daCapNhat = hanhKhachDataService.capNhatThongTin(
+                hanhKhachDangNhap.getMaHanhKhach(),
+                hoTen, soDienThoai, email
+        );
+        if (daCapNhat) {
+            hanhKhachDangNhap.setHoTen(hoTen);
+            hanhKhachDangNhap.setSoDienThoai(soDienThoai);
+            hanhKhachDangNhap.setEmail(email);
+        }
+        return daCapNhat;
+    }
+
     public TaiKhoan timTaiKhoan(String tenDangNhap) {
         if (isRong(tenDangNhap)) {
             return null;
