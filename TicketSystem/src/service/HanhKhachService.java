@@ -42,7 +42,7 @@ public class HanhKhachService {
     // Thêm một hành khách mới
     public boolean themHanhKhach(HanhKhach hanhKhach) {
         // Kiểm tra dữ liệu hành khách không được null
-    if (hanhKhach == null) {
+        if (hanhKhach == null) {
             return false;
         }
 

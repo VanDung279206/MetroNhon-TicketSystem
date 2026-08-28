@@ -32,7 +32,8 @@ public class VeStatusIntegrationTest {
 
         try {
             TaiKhoan taiKhoan = new TaiKhoan(
-                    "khach_ve", "123456", VaiTro.HANH_KHACH, true
+                    "khach_ve", "123456", VaiTro.HANH_KHACH, true,
+                    500_000
             );
             HanhKhach hanhKhach = new HanhKhach(
                     "HK001", "Khách kiểm thử", "0900000000",

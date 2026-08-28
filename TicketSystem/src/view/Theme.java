@@ -3,27 +3,42 @@ package view;
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JComponent;
+import javax.swing.ImageIcon;
 import javax.swing.JLabel;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
+import javax.swing.JTable;
 import javax.swing.JTextField;
+import javax.swing.RowFilter;
 import javax.swing.UIManager;
 import javax.swing.border.Border;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
+import javax.swing.table.TableModel;
+import javax.swing.table.TableRowSorter;
 import java.awt.Component;
+import java.awt.AlphaComposite;
 import java.awt.Color;
 import java.awt.Cursor;
+import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Insets;
+import java.awt.Image;
 import java.awt.RenderingHints;
+import java.awt.image.BufferedImage;
 import java.lang.reflect.Method;
+import java.net.URL;
 import java.text.NumberFormat;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Locale;
+import java.util.regex.Pattern;
 
 public final class Theme {
     public static final Color PRIMARY = new Color(29, 91, 196);
@@ -139,8 +154,32 @@ public final class Theme {
         JButton button = button(text, PRIMARY_DARK, new Color(219, 234, 254));
         button.putClientProperty("JButton.buttonType", "roundRect");
         button.setHorizontalAlignment(JButton.LEFT);
+        button.setIcon(new ImageIcon(new BufferedImage(
+                20, 20, BufferedImage.TYPE_INT_ARGB
+        )));
+        button.setIconTextGap(12);
         button.setBorder(BorderFactory.createEmptyBorder(12, 18, 12, 18));
         return button;
+    }
+
+    public static JButton navButton(String text, String iconPath) {
+        JButton button = navButton(text);
+        button.putClientProperty("metro.iconPath", iconPath);
+        updateNavigationButton(button, false);
+        return button;
+    }
+
+    public static void updateNavigationButton(JButton button,
+                                              boolean selected) {
+        Color foreground = selected
+                ? Color.WHITE : new Color(219, 234, 254);
+        button.setBackground(selected ? PRIMARY : PRIMARY_DARK);
+        button.setForeground(foreground);
+        Object iconPath = button.getClientProperty("metro.iconPath");
+        if (iconPath instanceof String path) {
+            button.setIcon(icon(path, 20, 20, foreground));
+            button.setIconTextGap(12);
+        }
     }
 
     public static JButton navIconButton(String text) {
@@ -157,6 +196,16 @@ public final class Theme {
         return button;
     }
 
+    public static JButton ghostIconButton(String iconPath, String tooltip) {
+        JButton button = button("", PRIMARY_SOFT, PRIMARY_DARK);
+        button.putClientProperty("JButton.buttonType", "roundRect");
+        button.setIcon(icon(iconPath, 22, 22, PRIMARY_DARK));
+        button.setToolTipText(tooltip);
+        button.setPreferredSize(new Dimension(46, 42));
+        button.setBorder(BorderFactory.createEmptyBorder(9, 12, 9, 12));
+        return button;
+    }
+
     public static JButton linkButton(String text) {
         JButton button = new JButton(text);
         button.setForeground(PRIMARY);
@@ -169,14 +218,53 @@ public final class Theme {
     }
 
     public static JButton accountButton(String displayName) {
-        JButton button = button(initials(displayName) + "   " + displayName + "  ▾",
-                SURFACE, TEXT);
+        JButton button = button("", SURFACE, TEXT);
         button.putClientProperty("JButton.buttonType", "roundRect");
         button.setBorder(BorderFactory.createCompoundBorder(
                 new RoundedBorder(BORDER, 22, 1),
                 BorderFactory.createEmptyBorder(10, 16, 10, 16)
         ));
+        updateAccountButton(button, displayName);
         return button;
+    }
+
+    public static void updateAccountButton(JButton button,
+                                           String displayName) {
+        String name = displayName == null || displayName.isBlank()
+                ? "Tài khoản" : displayName.trim();
+        button.setText(name);
+        button.setIcon(icon("/images/user.png", 20, 20, TEXT));
+        button.setIconTextGap(10);
+    }
+
+    public static ImageIcon icon(String resourcePath, int width, int height) {
+        return icon(resourcePath, width, height, null);
+    }
+
+    public static ImageIcon icon(String resourcePath, int width, int height,
+                                 Color tint) {
+        URL resource = Theme.class.getResource(resourcePath);
+        if (resource == null) {
+            return null;
+        }
+
+        Image source = new ImageIcon(resource).getImage();
+        BufferedImage image = new BufferedImage(
+                width, height, BufferedImage.TYPE_INT_ARGB
+        );
+        Graphics2D graphics = image.createGraphics();
+        graphics.setRenderingHint(
+                RenderingHints.KEY_INTERPOLATION,
+                RenderingHints.VALUE_INTERPOLATION_BICUBIC
+        );
+        graphics.drawImage(source, 0, 0, width, height, null);
+        if (tint != null) {
+            graphics.setComposite(AlphaComposite.SrcIn);
+            graphics.setColor(tint);
+            graphics.fillRect(0, 0, width, height);
+        }
+        graphics.dispose();
+        return new ImageIcon(image);
     }
 
     private static JButton button(String text, Color background, Color foreground) {
@@ -212,11 +300,52 @@ public final class Theme {
         }
     }
 
+    public static void enableTableSearch(JTextField searchField,
+                                         JTable... tables) {
+        List<TableRowSorter<TableModel>> sorters = new ArrayList<>();
+        for (JTable table : tables) {
+            TableRowSorter<TableModel> sorter =
+                    new TableRowSorter<>(table.getModel());
+            table.setRowSorter(sorter);
+            sorters.add(sorter);
+        }
+
+        Runnable updateFilter = () -> {
+            String keyword = searchField.getText().trim();
+            RowFilter<TableModel, Object> filter = keyword.isEmpty()
+                    ? null
+                    : RowFilter.regexFilter(
+                    "(?i)" + Pattern.quote(keyword)
+            );
+            for (TableRowSorter<TableModel> sorter : sorters) {
+                sorter.setRowFilter(filter);
+            }
+        };
+
+        searchField.getDocument().addDocumentListener(new DocumentListener() {
+            @Override
+            public void insertUpdate(DocumentEvent event) {
+                updateFilter.run();
+            }
+
+            @Override
+            public void removeUpdate(DocumentEvent event) {
+                updateFilter.run();
+            }
+
+            @Override
+            public void changedUpdate(DocumentEvent event) {
+                updateFilter.run();
+            }
+        });
+    }
+
     public static void showAccountMenu(JButton anchor,
                                        String displayName,
                                        String accountName,
                                        String description,
                                        Runnable onViewAccount,
+                                       Runnable onEditAccount,
                                        Runnable onChangePassword,
                                        Runnable onLogout) {
         JPopupMenu menu = new JPopupMenu();
@@ -246,17 +375,31 @@ public final class Theme {
         menu.add(profile);
         menu.addSeparator();
 
-        JMenuItem accountDetails = popupItem("●  Tài khoản");
+        JMenuItem accountDetails = popupItem(
+                "Tài khoản", "/images/user.png", TEXT
+        );
         accountDetails.addActionListener(event -> onViewAccount.run());
         menu.add(accountDetails);
 
+        if (onEditAccount != null) {
+            JMenuItem editAccount = popupItem(
+                    "Thay đổi thông tin", "/images/edit.png", PRIMARY
+            );
+            editAccount.addActionListener(event -> onEditAccount.run());
+            menu.add(editAccount);
+        }
+
         if (onChangePassword != null) {
-            JMenuItem changePassword = popupItem("◉  Đổi mật khẩu");
+            JMenuItem changePassword = popupItem(
+                    "Đổi mật khẩu", "/images/password-lock.png", PRIMARY
+            );
             changePassword.addActionListener(event -> onChangePassword.run());
             menu.add(changePassword);
         }
 
-        JMenuItem logout = popupItem("↪  Đăng xuất");
+        JMenuItem logout = popupItem(
+                "Đăng xuất", "/images/leave.png", DANGER
+        );
         logout.setForeground(DANGER);
         logout.addActionListener(event -> onLogout.run());
         menu.add(logout);
@@ -268,19 +411,21 @@ public final class Theme {
     private static JMenuItem popupItem(String text) {
         JMenuItem item = new JMenuItem(text);
         item.setFont(FONT.deriveFont(Font.BOLD));
+        item.setIcon(new ImageIcon(new BufferedImage(
+                18, 18, BufferedImage.TYPE_INT_ARGB
+        )));
+        item.setIconTextGap(10);
         item.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
         item.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         return item;
     }
 
-    public static String initials(String name) {
-        if (name == null || name.isBlank()) {
-            return "M";
-        }
-        String[] parts = name.trim().split("\\s+");
-        String first = parts[0].substring(0, 1);
-        String last = parts.length > 1 ? parts[parts.length - 1].substring(0, 1) : "";
-        return (first + last).toUpperCase(Locale.ROOT);
+    private static JMenuItem popupItem(String text, String iconPath,
+                                       Color tint) {
+        JMenuItem item = popupItem(text);
+        item.setIcon(icon(iconPath, 18, 18, tint));
+        item.setIconTextGap(10);
+        return item;
     }
 
     public static String money(double value) {

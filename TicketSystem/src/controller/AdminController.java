@@ -2,6 +2,8 @@ package controller;
 
 import model.TaiKhoan;
 import model.VaiTro;
+import model.LuotSuDungVe;
+import model.PhieuHuyVe;
 import model.VeMetro;
 
 import java.util.Collections;
@@ -94,7 +96,47 @@ public class AdminController {
         return muaVeController.getDanhSachVeDaBan();
     }
 
-    // Tính tổng doanh thu từ tất cả vé đã bán.
+    public List<LuotSuDungVe> getDanhSachLuotSuDung() {
+        if (!coQuyenQuanTri()) {
+            return Collections.emptyList();
+        }
+        return muaVeController.getDanhSachLuotSuDung();
+    }
+
+    public int getSoLuotSuDung(String maVe) {
+        if (!coQuyenQuanTri()) {
+            return 0;
+        }
+        return muaVeController.getSoLuotSuDung(maVe);
+    }
+
+    public boolean daHuyVe(String maVe) {
+        return coQuyenQuanTri() && muaVeController.daHuyVe(maVe);
+    }
+
+    public String getTenGa(String maGa) {
+        if (!coQuyenQuanTri()) {
+            return maGa;
+        }
+        return muaVeController.getTenGa(maGa);
+    }
+
+    public List<PhieuHuyVe> getDanhSachPhieuHuyVe() {
+        if (!coQuyenQuanTri()) {
+            return Collections.emptyList();
+        }
+        return muaVeController.getDanhSachPhieuHuyVe();
+    }
+
+    public double tinhTongTienHoan() {
+        double tongTienHoan = 0;
+        for (PhieuHuyVe phieu : getDanhSachPhieuHuyVe()) {
+            tongTienHoan += phieu.getSoTienHoan();
+        }
+        return tongTienHoan;
+    }
+
+    // Tính doanh thu thực sau khi trừ các khoản hoàn vé.
     public double tinhTongDoanhThu(){
         double tongDoanhThu = 0;
 
@@ -102,7 +144,7 @@ public class AdminController {
             tongDoanhThu += ve.getGiaVe();
         }
 
-        return tongDoanhThu;
+        return tongDoanhThu - tinhTongTienHoan();
     }
 
     private boolean coQuyenQuanTri() {

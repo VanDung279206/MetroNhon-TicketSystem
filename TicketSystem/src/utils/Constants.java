@@ -14,6 +14,10 @@ public final class Constants {
             Path.of(DATA_DIRECTORY, "ga.txt").toString();
     public static final String FILE_VE_DA_BAN =
             Path.of(DATA_DIRECTORY, "ve_da_ban.txt").toString();
+    public static final String FILE_LICH_SU_SU_DUNG =
+            Path.of(DATA_DIRECTORY, "lich_su_su_dung.txt").toString();
+    public static final String FILE_LICH_SU_HUY_VE =
+            Path.of(DATA_DIRECTORY, "lich_su_huy_ve.txt").toString();
 
     private Constants() {
     }
