@@ -21,7 +21,7 @@ public class AuthService {
     // Xử lý đăng ký tài khoản và tạo thông tin hành khách
     public boolean dangKy(TaiKhoan taiKhoan, HanhKhach hanhKhach) {
         // Kiểm tra dữ liệu đầu vào không được null
-    if (taiKhoan == null || hanhKhach == null) {
+        if (taiKhoan == null || hanhKhach == null) {
             return false;
         }
 
@@ -29,29 +29,29 @@ public class AuthService {
         String matKhau = taiKhoan.getMatKhau();
 
         // Kiểm tra tên đăng nhập không được để trống
-    // Kiểm tra các thông tin đầu vào không được để trống
-    if (tenDangNhap == null || tenDangNhap.trim().isEmpty()) {
+        // Kiểm tra các thông tin đầu vào không được để trống
+        if (tenDangNhap == null || tenDangNhap.trim().isEmpty()) {
             return false;
         }
 
         // Kiểm tra mật khẩu không được để trống
-    if (matKhau == null || matKhau.isEmpty()) {
+        if (matKhau == null || matKhau.isEmpty()) {
             return false;
         }
 
         // Kiểm tra tên đăng nhập đã tồn tại hay chưa
-    if (taiKhoanDataService.tonTaiTenDangNhap(tenDangNhap)) {
+        if (taiKhoanDataService.tonTaiTenDangNhap(tenDangNhap)) {
             return false;
         }
 
         // Tài khoản đăng ký thông thường luôn có vai trò hành khách
-    taiKhoan.setVaiTro(VaiTro.HANH_KHACH);
+        taiKhoan.setVaiTro(VaiTro.HANH_KHACH);
         // Chuyển trạng thái tài khoản sang đang hoạt động
-    taiKhoan.setTrangThai(true);
+        taiKhoan.setTrangThai(true);
         hanhKhach.setTaiKhoan(taiKhoan);
 
         // Tự sinh mã hành khách nếu chưa có mã
-    if (hanhKhach.getMaHanhKhach() == null
+        if (hanhKhach.getMaHanhKhach() == null
                 || hanhKhach.getMaHanhKhach().trim().isEmpty()) {
             hanhKhach.setMaHanhKhach(
                     hanhKhachService.sinhMaHanhKhachMoi()
@@ -59,20 +59,20 @@ public class AuthService {
         }
 
         // Kiểm tra số điện thoại và email có bị trùng hay không
-    if (hanhKhachService.tonTaiSoDienThoai(hanhKhach.getSoDienThoai())
+        if (hanhKhachService.tonTaiSoDienThoai(hanhKhach.getSoDienThoai())
                 || hanhKhachService.tonTaiEmail(hanhKhach.getEmail())) {
             return false;
         }
 
         // Lưu tài khoản trước
-    if (!taiKhoanDataService.themTaiKhoan(taiKhoan)) {
+        if (!taiKhoanDataService.themTaiKhoan(taiKhoan)) {
             return false;
         }
 
         // Lưu thông tin hành khách
-    if (!hanhKhachService.themHanhKhach(hanhKhach)) {
+        if (!hanhKhachService.themHanhKhach(hanhKhach)) {
             // Đọc danh sách tài khoản để cập nhật dữ liệu
-    List<TaiKhoan> danhSach =
+            List<TaiKhoan> danhSach =
                     taiKhoanDataService.docDanhSachTaiKhoan();
             danhSach.removeIf(x -> x.getTenDangNhap()
                     .equalsIgnoreCase(tenDangNhap));
@@ -91,16 +91,16 @@ public class AuthService {
         }
 
         // Tìm tài khoản theo tên đăng nhập
-    TaiKhoan taiKhoan =
+        TaiKhoan taiKhoan =
                 taiKhoanDataService.timTheoTenDangNhap(tenDangNhap);
 
         // Không cho tài khoản không tồn tại hoặc đang bị khóa đăng nhập
-    if (taiKhoan == null || !taiKhoan.isTrangThai()) {
+        if (taiKhoan == null || !taiKhoan.isTrangThai()) {
             return null;
         }
 
         // So sánh mật khẩu, có phân biệt chữ hoa và chữ thường
-    if (!taiKhoan.getMatKhau().equals(matKhau)) {
+        if (!taiKhoan.getMatKhau().equals(matKhau)) {
             return null;
         }
 
@@ -128,15 +128,15 @@ public class AuthService {
         }
 
         // Cập nhật mật khẩu mới
-    taiKhoan.setMatKhau(matKhauMoi);
+        taiKhoan.setMatKhau(matKhauMoi);
 
         List<TaiKhoan> danhSach =
                 taiKhoanDataService.docDanhSachTaiKhoan();
 
         // Duyệt danh sách để tìm tài khoản cần cập nhật
-    for (int i = 0; i < danhSach.size(); i++) {
+        for (int i = 0; i < danhSach.size(); i++) {
             // Tìm đúng tài khoản cần cập nhật
-    if (danhSach.get(i).getTenDangNhap()
+            if (danhSach.get(i).getTenDangNhap()
                     .equalsIgnoreCase(tenDangNhap.trim())) {
                 danhSach.set(i, taiKhoan);
                 taiKhoanDataService.luuDanhSachTaiKhoan(danhSach);
@@ -161,7 +161,7 @@ public class AuthService {
         }
 
         // Chuyển trạng thái tài khoản sang bị khóa
-    taiKhoan.setTrangThai(false);
+        taiKhoan.setTrangThai(false);
 
         List<TaiKhoan> danhSach =
                 taiKhoanDataService.docDanhSachTaiKhoan();
