@@ -1,6 +1,8 @@
 package view;
 
 import controller.AdminController;
+import model.LuotSuDungVe;
+import model.PhieuHuyVe;
 import model.TaiKhoan;
 import model.VeMetro;
 
@@ -13,6 +15,7 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTabbedPane;
 import javax.swing.JTable;
+import javax.swing.JTextField;
 import javax.swing.table.DefaultTableModel;
 import java.awt.BorderLayout;
 import java.awt.Color;
@@ -35,7 +38,7 @@ public class AdminView extends JPanel {
         setLayout(new BorderLayout());
         setBackground(Theme.BACKGROUND);
 
-        drawer = taoSidebar(taiKhoan, onLogout);
+        drawer = taoSidebar();
         workspace.setOpaque(false);
         workspace.add(drawer, BorderLayout.WEST);
         content.setBackground(Theme.BACKGROUND);
@@ -47,12 +50,13 @@ public class AdminView extends JPanel {
         refresh();
     }
 
-    private NavigationDrawer taoSidebar(TaiKhoan taiKhoan, Runnable onLogout) {
+    private NavigationDrawer taoSidebar() {
         NavigationDrawer navigationDrawer = new NavigationDrawer(
-                "Quản trị hệ thống", taiKhoan.getTenDangNhap(),
-                this::toggleDrawer, onLogout
+                this::toggleDrawer
         );
-        navigationDrawer.addItem("▦  Bảng điều khiển", this::refresh);
+        navigationDrawer.addItem(
+                "Bảng điều khiển", "/images/edit.png", this::refresh
+        );
         return navigationDrawer;
     }
 
@@ -67,7 +71,10 @@ public class AdminView extends JPanel {
 
         JPanel left = new JPanel(new FlowLayout(FlowLayout.LEFT, 12, 0));
         left.setOpaque(false);
-        JButton menuButton = Theme.ghostButton("☰  Danh mục");
+        JButton menuButton = Theme.ghostIconButton(
+                "/images/menu-burger.png",
+                "Mở hoặc thu gọn thanh chức năng"
+        );
         menuButton.addActionListener(event -> toggleDrawer());
         JLabel section = Theme.muted("Bảng điều khiển quản trị");
         section.setFont(section.getFont().deriveFont(java.awt.Font.BOLD));
@@ -81,6 +88,7 @@ public class AdminView extends JPanel {
                 taiKhoan.getTenDangNhap(),
                 "Quản trị viên hệ thống",
                 () -> showAccountDetails(taiKhoan),
+                null,
                 null,
                 onLogout
         ));
@@ -107,7 +115,9 @@ public class AdminView extends JPanel {
         heading.setLayout(new BoxLayout(heading, BoxLayout.Y_AXIS));
         JLabel title = Theme.title("Bảng điều khiển", 28);
         title.setAlignmentX(LEFT_ALIGNMENT);
-        JLabel subtitle = Theme.muted("Theo dõi tài khoản, vé đã bán và doanh thu hệ thống.");
+        JLabel subtitle = Theme.muted(
+                "Theo dõi tài khoản, vé, lượt sử dụng và hoàn tiền."
+        );
         subtitle.setAlignmentX(LEFT_ALIGNMENT);
         heading.add(title);
         heading.add(Box.createVerticalStrut(6));
@@ -115,18 +125,25 @@ public class AdminView extends JPanel {
 
         List<TaiKhoan> accounts = adminController.getDanhSachTaiKhoan();
         List<VeMetro> tickets = adminController.getDanhSachVeDaBan();
+        List<LuotSuDungVe> usages = adminController.getDanhSachLuotSuDung();
+        List<PhieuHuyVe> cancellations =
+                adminController.getDanhSachPhieuHuyVe();
         long activeAccounts = accounts.stream().filter(TaiKhoan::isTrangThai).count();
-        JPanel stats = new JPanel(new GridLayout(1, 3, 18, 0));
+        JPanel stats = new JPanel(new GridLayout(1, 4, 18, 0));
         stats.setOpaque(false);
         stats.add(statCard("Tài khoản hoạt động", String.valueOf(activeAccounts), Theme.SUCCESS));
         stats.add(statCard("Tổng vé đã bán", String.valueOf(tickets.size()), Theme.PRIMARY));
-        stats.add(statCard("Tổng doanh thu", Theme.money(adminController.tinhTongDoanhThu()),
+        stats.add(statCard("Tiền đã hoàn",
+                Theme.money(adminController.tinhTongTienHoan()), Theme.WARNING));
+        stats.add(statCard("Doanh thu thực", Theme.money(adminController.tinhTongDoanhThu()),
                 Theme.WARNING));
 
         JTabbedPane tabs = new JTabbedPane();
         tabs.putClientProperty("JTabbedPane.tabType", "card");
         tabs.addTab("Tài khoản", taoTaiKhoanPanel(accounts));
         tabs.addTab("Vé đã bán", taoVePanel(tickets));
+        tabs.addTab("Lượt sử dụng", taoLuotSuDungPanel(usages));
+        tabs.addTab("Vé đã hủy", taoPhieuHuyPanel(cancellations));
 
         JPanel center = new JPanel(new BorderLayout(0, 18));
         center.setOpaque(false);
@@ -167,6 +184,10 @@ public class AdminView extends JPanel {
         }
         accountTable = new JTable(model);
         styleTable(accountTable);
+        JTextField searchField = createSearchField(
+                "Tìm tên đăng nhập, vai trò, trạng thái..."
+        );
+        Theme.enableTableSearch(searchField, accountTable);
 
         JPanel actions = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
         actions.setOpaque(false);
@@ -177,15 +198,19 @@ public class AdminView extends JPanel {
         actions.add(unlockButton);
         actions.add(lockButton);
 
+        panel.add(searchField, BorderLayout.NORTH);
         panel.add(new JScrollPane(accountTable), BorderLayout.CENTER);
         panel.add(actions, BorderLayout.SOUTH);
         return panel;
     }
 
     private JPanel taoVePanel(List<VeMetro> tickets) {
-        JPanel panel = new JPanel(new BorderLayout());
+        JPanel panel = new JPanel(new BorderLayout(0, 12));
         panel.setOpaque(false);
-        String[] columns = {"Mã vé", "Hành khách", "Loại", "Ngày mua", "Giá vé"};
+        String[] columns = {
+                "Mã vé", "Hành khách", "Loại", "Ngày mua",
+                "Giá vé", "Lượt dùng", "Trạng thái"
+        };
         DefaultTableModel model = nonEditableModel(columns);
         for (VeMetro ticket : tickets) {
             model.addRow(new Object[]{
@@ -193,13 +218,90 @@ public class AdminView extends JPanel {
                     ticket.getHanhKhach().getHoTen(),
                     "VE_LUOT".equals(ticket.getLoaiVe()) ? "Vé lượt" : "Vé tháng",
                     Theme.dateTime(ticket.getNgayMua()),
-                    Theme.money(ticket.getGiaVe())
+                    Theme.money(ticket.getGiaVe()),
+                    adminController.getSoLuotSuDung(ticket.getMaVe()),
+                    adminController.daHuyVe(ticket.getMaVe())
+                            ? "Đã hủy"
+                            : ticket.isConHieuLuc()
+                              ? "Còn hiệu lực" : "Hết hiệu lực"
             });
         }
         JTable table = new JTable(model);
         styleTable(table);
+        JTextField searchField = createSearchField(
+                "Tìm mã vé, hành khách, loại vé..."
+        );
+        Theme.enableTableSearch(searchField, table);
+        panel.add(searchField, BorderLayout.NORTH);
         panel.add(new JScrollPane(table), BorderLayout.CENTER);
         return panel;
+    }
+
+    private JPanel taoLuotSuDungPanel(List<LuotSuDungVe> usages) {
+        JPanel panel = new JPanel(new BorderLayout(0, 12));
+        panel.setOpaque(false);
+        String[] columns = {
+                "Mã lượt", "Mã vé", "Mã hành khách",
+                "Ga đi", "Ga đến", "Thời gian"
+        };
+        DefaultTableModel model = nonEditableModel(columns);
+        for (LuotSuDungVe usage : usages) {
+            model.addRow(new Object[]{
+                    usage.getMaLuotSuDung(), usage.getMaVe(),
+                    usage.getMaHanhKhach(),
+                    adminController.getTenGa(usage.getMaGaDi()),
+                    adminController.getTenGa(usage.getMaGaDen()),
+                    Theme.dateTime(usage.getThoiGianSuDung())
+            });
+        }
+        JTable table = new JTable(model);
+        styleTable(table);
+        JTextField searchField = createSearchField(
+                "Tìm mã lượt, mã vé, hành khách, ga..."
+        );
+        Theme.enableTableSearch(searchField, table);
+        panel.add(searchField, BorderLayout.NORTH);
+        panel.add(new JScrollPane(table), BorderLayout.CENTER);
+        return panel;
+    }
+
+    private JPanel taoPhieuHuyPanel(List<PhieuHuyVe> cancellations) {
+        JPanel panel = new JPanel(new BorderLayout(0, 12));
+        panel.setOpaque(false);
+        String[] columns = {
+                "Mã hủy", "Mã vé", "Mã hành khách", "Thời gian",
+                "Giá gốc", "Tỷ lệ hoàn", "Tiền hoàn", "Lý do"
+        };
+        DefaultTableModel model = nonEditableModel(columns);
+        for (PhieuHuyVe cancellation : cancellations) {
+            model.addRow(new Object[]{
+                    cancellation.getMaPhieuHuy(),
+                    cancellation.getMaVe(),
+                    cancellation.getMaHanhKhach(),
+                    Theme.dateTime(cancellation.getThoiGianHuy()),
+                    Theme.money(cancellation.getGiaVeGoc()),
+                    Math.round(cancellation.getTyLeHoan() * 100) + "%",
+                    Theme.money(cancellation.getSoTienHoan()),
+                    cancellation.getLyDo()
+            });
+        }
+        JTable table = new JTable(model);
+        styleTable(table);
+        JTextField searchField = createSearchField(
+                "Tìm mã hủy, mã vé, hành khách, lý do..."
+        );
+        Theme.enableTableSearch(searchField, table);
+        panel.add(searchField, BorderLayout.NORTH);
+        panel.add(new JScrollPane(table), BorderLayout.CENTER);
+        return panel;
+    }
+
+    private JTextField createSearchField(String placeholder) {
+        JTextField searchField = new JTextField();
+        searchField.putClientProperty("JTextField.placeholderText", placeholder);
+        searchField.setPreferredSize(new Dimension(320, 42));
+        Theme.inputStyle(searchField);
+        return searchField;
     }
 
     private DefaultTableModel nonEditableModel(String[] columns) {
