@@ -21,8 +21,8 @@ import java.util.List;
  */
 public class MetroLoginBackgroundPanel extends JPanel {
     private static final int DISPLAY_TIME_MS = 2_000;
-    private static final int SLIDE_TIME_MS = 350;
-    private static final int FRAME_TIME_MS = 32;
+    private static final int SLIDE_TIME_MS = 380;
+    private static final int FRAME_TIME_MS = 64;
 
     private final List<BufferedImage> backgroundImages = new ArrayList<>();
     private final Timer displayTimer;
