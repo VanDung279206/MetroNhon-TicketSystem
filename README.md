@@ -167,6 +167,6 @@ flowchart TD
 | STT | Họ và tên | Mã sinh viên | Công việc chính | chú thích |
 |---:|---|---|---|---|
 | 1 | Nguyễn Văn Dũng | 2025607310 | Model, Data Service, giao diện và tích hợp | hoàn thành tốt |
-| 2 | Nguyễn Khắc Hải | Cập nhật | Controller | hoàn thành tốt |
-| 3 | Cập nhật | Cập nhật | Service/kiểm thử | hoàn thành tốt |
-| 4 | Cập nhật | Cập nhật | Tài liệu/giao diện/kiểm thử | phần giao diện nộp muộn |
+| 2 | Nguyễn Khắc Hải | 2024603442 | Controller | hoàn thành tốt |
+| 3 | Thành Hoài An | 2024601843 | Service/kiểm thử | hoàn thành tốt |
+| 4 | Hà Đức Việt | 2024608060 | Tài liệu/giao diện/kiểm thử | phần giao diện nộp muộn |
